@@ -1,0 +1,13 @@
+
+Research Paper: Test PubMed Paper
+
+Authors: Test Author
+
+Abstract:
+This is a test abstract for PubMed extraction.
+
+Original Source: https://pubmed.ncbi.nlm.nih.gov/34567890/
+
+Note: This is a placeholder PDF. The original paper could not be automatically extracted.
+Please visit the original source URL to access the full paper content.
+    

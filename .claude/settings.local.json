@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:pubmed.ncbi.nlm.nih.gov)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(kill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)"
+    ],
+    "deny": []
+  }
+}

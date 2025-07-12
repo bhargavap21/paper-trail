@@ -1,0 +1,13 @@
+
+Research Paper: CRISPR-Cas9: a new and promising player in gene therapy
+
+Authors: Lu Xiao-Jie, Xue Hui-Ying, Ke Zun-Ping, Chen Jin-Lian, Ji Li-Juan
+
+Abstract:
+First introduced into mammalian organisms in 2013, the RNA-guided genome editing tool CRISPR-Cas9 offers several advantages over conventional ones.
+
+Original Source: https://pubmed.ncbi.nlm.nih.gov/25713109/
+
+Note: This is a placeholder PDF. The original paper could not be automatically extracted.
+Please visit the original source URL to access the full paper content.
+    
