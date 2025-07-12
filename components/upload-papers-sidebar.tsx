@@ -263,7 +263,7 @@ export function UploadPapersSidebar({ onPaperClick }: UploadPapersSidebarProps =
   return (
     <>
       <div className={cn(
-        "flex flex-col bg-gray-50 border-r border-gray-200 transition-all duration-300 ease-in-out",
+        "flex flex-col h-full bg-gray-50 border-r border-gray-200 transition-all duration-300 ease-in-out",
         isCollapsed ? "w-12" : "w-80"
       )}>
         {/* Header */}

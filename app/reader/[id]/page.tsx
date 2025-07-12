@@ -351,9 +351,14 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         />
 
         {/* Main Content with Sidebars */}
-        <div className="flex flex-1 overflow-hidden">
-          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
-          <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 relative overflow-hidden">
+          {/* Left Sidebar */}
+          <div className="absolute left-0 top-0 bottom-0 z-10">
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+          </div>
+
+          {/* Center Content - Always Centered */}
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -366,15 +371,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               </div>
             </div>
           </div>
-          <CopilotChat
-            isOpen={true}
-            onClose={() => {
-              setCopilotChatOpen(false);
-              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-            }}
-            paperId={activePaperId}
-            autoPrompt={copilotAutoPrompt}
-          />
+
+          {/* Right Sidebar */}
+          <div className="absolute right-0 top-0 bottom-0 z-10">
+            <CopilotChat
+              isOpen={true}
+              onClose={() => {
+                setCopilotChatOpen(false);
+                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+              }}
+              paperId={activePaperId}
+              autoPrompt={copilotAutoPrompt}
+            />
+          </div>
         </div>
       </div>
     );
@@ -427,11 +436,14 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         />
 
         {/* Main Content with Sidebars */}
-        <div className="flex flex-1 overflow-hidden">
-          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+        <div className="flex-1 relative overflow-hidden">
+          {/* Left Sidebar */}
+          <div className="absolute left-0 top-0 bottom-0 z-10">
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+          </div>
 
-          {/* Content Area - Centered */}
-          <div className="flex-1 flex justify-center overflow-hidden">
+          {/* Center Content - Always Centered */}
+          <div className="absolute inset-0 flex justify-center overflow-hidden">
             {/* PDF Viewer - Centered Container */}
             {currentPaper.filePath && (
               <div className="w-full max-w-6xl overflow-hidden">
@@ -476,15 +488,18 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
             )}
           </div>
 
-          <CopilotChat
-            isOpen={true}
-            onClose={() => {
-              setCopilotChatOpen(false);
-              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-            }}
-            paperId={activePaperId}
-            autoPrompt={copilotAutoPrompt}
-          />
+          {/* Right Sidebar */}
+          <div className="absolute right-0 top-0 bottom-0 z-10">
+            <CopilotChat
+              isOpen={true}
+              onClose={() => {
+                setCopilotChatOpen(false);
+                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+              }}
+              paperId={activePaperId}
+              autoPrompt={copilotAutoPrompt}
+            />
+          </div>
         </div>
       </div>
     )
