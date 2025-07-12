@@ -315,7 +315,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
   return (
     <Card
       ref={popupRef}
-      className={`absolute z-50 bg-white dark:bg-slate-800 shadow-lg rounded-lg p-4 border border-slate-200 dark:border-slate-700 transition-all duration-300 ${isNoteMode ? 'w-[500px] max-w-[90vw]' : 'w-96'}`}
+      className={`absolute z-50 bg-white shadow-lg rounded-lg p-4 border border-slate-200 transition-all duration-300 ${isNoteMode ? 'w-[500px] max-w-[90vw]' : 'w-96'}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -324,7 +324,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       }}
     >
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-md font-medium text-slate-900 dark:text-slate-100 flex items-center">
+        <h3 className="text-md font-medium text-slate-900 flex items-center">
           {isNoteMode ? (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" className="text-yellow-500 mr-2 h-5 w-5" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -362,7 +362,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            className="text-slate-500 hover:text-slate-700"
             aria-label="Close"
           >
             <XIcon size={16} />
@@ -371,7 +371,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       </div>
 
       {/* Highlighted Text */}
-      <div className="mb-3 text-sm text-slate-800 dark:text-slate-200 max-h-24 overflow-y-auto bg-slate-100 dark:bg-slate-700 p-2 rounded border border-slate-200 dark:border-slate-600 italic">
+      <div className="mb-3 text-sm text-slate-800 max-h-24 overflow-y-auto bg-slate-100 p-2 rounded border border-slate-200 italic">
         "{highlight.text || highlight.position.text || "Selected text"}"
       </div>
 
@@ -379,7 +379,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       {isNoteMode ? (
         <div className="mb-4">
           <textarea
-            className="w-full h-32 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-md shadow-inner text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
+            className="w-full h-32 p-3 bg-yellow-50 border border-yellow-200 rounded-md shadow-inner text-slate-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
             placeholder="Type your notes here..."
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
@@ -389,7 +389,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
               variant="outline"
               size="sm"
               onClick={handleCancelNote}
-              className="border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-300"
+              className="border-slate-300 text-slate-700"
             >
               Cancel
             </Button>
@@ -397,7 +397,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
               size="sm"
               onClick={handleSaveNote}
               disabled={isSavingNote}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white"
             >
               {isSavingNote ? (
                 <>
@@ -413,7 +413,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       ) : (
         /* Summary Area - Only show when not in note mode */
         <div className="mb-4 min-h-[3rem]">
-          <div className="text-sm text-slate-700 dark:text-slate-300">
+          <div className="text-sm text-slate-700">
             {summary}
           </div>
         </div>
@@ -421,9 +421,9 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
 
       {/* Display existing note if there is one and not in note mode */}
       {!isNoteMode && noteText && (
-        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-md border border-yellow-200 dark:border-yellow-800">
-          <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Your Note:</h4>
-          <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{noteText}</p>
+        <div className="mb-4 bg-yellow-50 p-3 rounded-md border border-yellow-200">
+          <h4 className="text-sm font-medium text-yellow-800 mb-1">Your Note:</h4>
+          <p className="text-sm text-slate-700 whitespace-pre-wrap">{noteText}</p>
         </div>
       )}
 
@@ -436,7 +436,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
               <Button
                 onClick={handleClip}
                 disabled={isClipping || clipStatus === 'success'} // Disable while clipping or on success
-                className="flex-1 bg-royal-600 hover:bg-royal-700 text-white flex items-center justify-center gap-2 dark:bg-royal-700 dark:hover:bg-royal-800"
+                className="flex-1 bg-royal-600 hover:bg-royal-700 text-white flex items-center justify-center gap-2"
               >
                 {clipStatus === 'idle' && <><Clipboard size={16} /><span>Clip To Memory</span></>}
                 {clipStatus === 'loading' && <><Loader2 size={16} className="animate-spin" /><span>Saving...</span></>}
@@ -487,14 +487,13 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
           from, to { opacity: 1; }
           50% { opacity: 0; }
         }
-        /* Basic prose styling adjustments for dark mode */
-        .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 { color: #f1f5f9; }
-        .dark .prose p, .dark .prose li, .dark .prose blockquote, .dark .prose td, .dark .prose th { color: #cbd5e1; }
-        .dark .prose strong { color: #f8fafc; }
-        .dark .prose code { color: #e2e8f0; background-color: #334155; padding: 0.1em 0.3em; border-radius: 0.25em; }
-        .dark .prose a { color: #7dd3fc; }
-        .dark .prose ul { list-style-type: disc; padding-left: 1.5em; } /* Ensure lists are styled */
-        .prose ul { list-style-type: disc; padding-left: 1.5em; } /* Ensure lists are styled for light mode */
+        /* Basic prose styling adjustments */
+        .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { color: #1e293b; }
+        .prose p, .prose li, .prose blockquote, .prose td, .prose th { color: #475569; }
+        .prose strong { color: #0f172a; }
+        .prose code { color: #334155; background-color: #f1f5f9; padding: 0.1em 0.3em; border-radius: 0.25em; }
+        .prose a { color: #2563eb; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; }
       `}</style>
     </Card>
   )

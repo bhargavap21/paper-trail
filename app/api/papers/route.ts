@@ -67,3 +67,27 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Connect to the database
+    const db = await connectToDatabase();
+    const papersCollection = db.collection(dbModels.papers);
+    
+    // Delete all papers
+    const result = await papersCollection.deleteMany({});
+    
+    return NextResponse.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message: `Successfully deleted ${result.deletedCount} papers`
+    });
+    
+  } catch (error) {
+    console.error('Error deleting all papers:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete all papers' },
+      { status: 500 }
+    );
+  }
+}

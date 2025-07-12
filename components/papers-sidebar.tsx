@@ -227,7 +227,7 @@ export function PapersSidebar({ isOpen, onClose, activePaperId }: PapersSidebarP
             </Link>
           )}
           
-          <Link href="/upload">
+          <Link href="/reader">
             <Button className="w-full bg-royal-500 hover:bg-royal-600 text-white font-sans font-medium gap-2">
               <Upload className="h-4 w-4" />
               Upload New Paper

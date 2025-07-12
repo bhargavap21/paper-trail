@@ -206,15 +206,19 @@ export default function MemoryPage() {
       <div className="flex flex-col min-h-screen bg-ivory">
         {/* Header */}
         <header className="border-b bg-white shadow-sm">
-          <div className="container flex h-16 items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <NextLink href="/" className="flex items-center gap-2">
-                <div className="bg-royal-500 p-1.5 rounded-lg">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-sans font-bold text-royal-500">Eureka</span>
-              </NextLink>
-            </div>
+          <div className="container flex h-16 items-center px-4 md:px-6">
+            <NextLink href="/" className="flex items-center gap-2">
+              <div className="bg-royal-500 p-1.5 rounded-lg">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-sans font-bold text-royal-500">Eureka</span>
+            </NextLink>
+            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
+              <NextLink href="/reader" className="font-sans font-medium text-royal-500 hover:text-royal-600">Reader</NextLink>
+              <NextLink href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</NextLink>
+              <NextLink href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</NextLink>
+              <NextLink href="/memory" className="font-sans font-bold text-royal-700 underline underline-offset-4">Memory</NextLink>
+            </nav>
           </div>
         </header>
 
@@ -236,16 +240,20 @@ export default function MemoryPage() {
       
       {/* Header */}
       <header className="border-b bg-white shadow-sm">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <NextLink href="/" className="flex items-center gap-2">
-              <div className="bg-royal-500 p-1.5 rounded-lg">
-                <BookOpen className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-sans font-bold text-royal-500">Eureka</span>
-            </NextLink>
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="container flex h-16 items-center px-4 md:px-6">
+          <NextLink href="/" className="flex items-center gap-2">
+            <div className="bg-royal-500 p-1.5 rounded-lg">
+              <BookOpen className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-sans font-bold text-royal-500">Eureka</span>
+          </NextLink>
+          <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
+            <NextLink href="/reader" className="font-sans font-medium text-royal-500 hover:text-royal-600">Reader</NextLink>
+            <NextLink href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</NextLink>
+            <NextLink href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</NextLink>
+            <NextLink href="/memory" className="font-sans font-bold text-royal-700 underline underline-offset-4">Memory</NextLink>
+          </nav>
+          <div className="flex items-center gap-4 ml-auto">
             <Button 
               variant="outline" 
               size="sm" 
@@ -291,7 +299,7 @@ export default function MemoryPage() {
                     Start highlighting text in papers to build your semantic knowledge graph. 
                     Similar concepts will automatically connect based on AI embeddings.
                   </p>
-                  <NextLink href="/upload">
+                  <NextLink href="/reader">
                     <Button className="bg-royal-500 hover:bg-royal-600 text-white">
                       Upload Your First Paper
                     </Button>

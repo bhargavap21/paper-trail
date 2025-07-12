@@ -131,9 +131,9 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 z-50 flex flex-col">
+    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-slate-200 z-50 flex flex-col">
       {/* Header */}
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-slate-200">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Bot className="h-5 w-5 text-blue-500" />
           Copilot Chat
@@ -160,7 +160,7 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                 className={`max-w-[80%] rounded-lg px-3 py-2 ${
                   message.isUser
                     ? 'bg-blue-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                    : 'bg-slate-100 text-slate-900'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">

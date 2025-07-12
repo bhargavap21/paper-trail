@@ -126,29 +126,35 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   const unwrappedParams = use(params as any) as { id: string };
   const paperIdFromUrl = unwrappedParams.id;
   
-  const [paper, setPaper] = useState<PaperType | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activePaperId, setActivePaperId] = useState(paperIdFromUrl || "")
-  const [openPapers, setOpenPapers] = useState<Array<{ id: string; title: string }>>([])
+  const [openPapers, setOpenPapers] = useState<Array<{ id: string; title: string; paper: PaperType }>>([])
+  const [initialLoading, setInitialLoading] = useState(true);
   const [copilotChatOpen, setCopilotChatOpen] = useState(false)
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
 
   const { toast } = useToast()
   const router = useRouter()
 
-  // Fetch paper data from API
+  // Get the current active paper from openPapers
+  const currentPaper = openPapers.find(p => p.id === activePaperId)?.paper || null;
+
+  // Fetch paper data from API (only on initial load)
   useEffect(() => {
-    const fetchPaper = async (idToFetch: string) => {
+    const fetchInitialPaper = async (idToFetch: string) => {
       if (!idToFetch) {
-         setLoading(false);
-         setPaper(null);
-         setActivePaperId("");
-         toast({ title: 'Error', description: 'No paper ID provided.', variant: 'destructive' });
+         setInitialLoading(false);
          return;
       }
       
+      // Check if paper is already loaded
+      if (openPapers.some(p => p.id === idToFetch)) {
+        setActivePaperId(idToFetch);
+        setInitialLoading(false);
+        return;
+      }
+      
       try {
-        setLoading(true);
+        setInitialLoading(true);
         const response = await fetch(`/api/papers/${idToFetch}`);
         if (!response.ok) {
           throw new Error('Failed to fetch paper');
@@ -160,19 +166,17 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         }
         
         const fetchedPaper: PaperType = data.paper;
-        setPaper(fetchedPaper);
-        
-        // Use the actual ID from the fetched paper
         const actualPaperId = fetchedPaper._id.toString();
-        setActivePaperId(actualPaperId);
         
-        // Add to open papers if not already there
+        // Add to open papers with full paper data
         setOpenPapers(prev => {
           if (!prev.some(p => p.id === actualPaperId)) {
-            return [...prev, { id: actualPaperId, title: fetchedPaper.title }]
+            return [...prev, { id: actualPaperId, title: fetchedPaper.title, paper: fetchedPaper }];
           }
           return prev;
         });
+        
+        setActivePaperId(actualPaperId);
         
       } catch (error) {
         console.error('Error fetching paper:', error);
@@ -185,44 +189,37 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         // Use mock data as fallback
         const mockPaper = paperData[idToFetch as keyof typeof paperData];
         if (mockPaper) {
-          setPaper(mockPaper as PaperType); // Assert type when using mock data
-          setActivePaperId(idToFetch); 
-          // Add current paper to tabs if not already there
           setOpenPapers(prev => {
             if (!prev.some(p => p.id === idToFetch)) {
-              return [...prev, { id: idToFetch, title: mockPaper.title }];
+              return [...prev, { id: idToFetch, title: mockPaper.title, paper: mockPaper as PaperType }];
             }
             return prev;
           });
-        } else {
-          setActivePaperId("");
-          setPaper(null);
+          setActivePaperId(idToFetch);
         }
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
 
-    fetchPaper(paperIdFromUrl); // Fetch using ID from URL
+    fetchInitialPaper(paperIdFromUrl);
     
-  }, [paperIdFromUrl, toast]); // Depend only on URL ID and toast
-
-  const handlePaperSelect = (id: string) => {
-    // Navigate or set active ID - this seems okay
-    router.push(`/reader/${id}`);
-  };
+  }, [paperIdFromUrl, toast]);
 
   const handleTabChange = (id: string) => {
-    // Navigate or set active ID
-     router.push(`/reader/${id}`);
+    // Just switch tabs without navigation - instant switching!
+    setActivePaperId(id);
+    // Update URL without page reload
+    window.history.replaceState(null, '', `/reader/${id}`);
   };
 
   const handlePaperClickFromSidebar = async (paperId: string) => {
     // Check if paper is already in tabs, if so just switch to it
     const existingTab = openPapers.find(p => p.id === paperId);
     if (existingTab) {
-      // Just navigate to existing tab
-      router.push(`/reader/${paperId}`);
+      // Just switch to existing tab - no loading!
+      setActivePaperId(paperId);
+      window.history.replaceState(null, '', `/reader/${paperId}`);
       return;
     }
 
@@ -231,31 +228,59 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       const response = await fetch(`/api/papers/${paperId}`);
       if (response.ok) {
         const data = await response.json();
-        const paperTitle = data.paper?.title || `Paper ${paperId}`;
+        const fetchedPaper: PaperType = data.paper;
         
-        // Add to open papers
-        setOpenPapers(prev => [...prev, { id: paperId, title: paperTitle }]);
+        // Add to open papers with full paper data
+        setOpenPapers(prev => [...prev, { 
+          id: paperId, 
+          title: fetchedPaper.title, 
+          paper: fetchedPaper 
+        }]);
+        
+        // Switch to the new tab
+        setActivePaperId(paperId);
+        window.history.replaceState(null, '', `/reader/${paperId}`);
       } else {
-        // Add with generic title if fetch fails
-        setOpenPapers(prev => [...prev, { id: paperId, title: `Paper ${paperId}` }]);
+        toast({
+          title: 'Error',
+          description: 'Failed to load paper',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error fetching paper for tab:', error);
-      // Add with generic title if fetch fails
-      setOpenPapers(prev => [...prev, { id: paperId, title: `Paper ${paperId}` }]);
+      toast({
+        title: 'Error',
+        description: 'Failed to load paper',
+        variant: 'destructive',
+      });
     }
-    
-    // Navigate to the paper
-    router.push(`/reader/${paperId}`);
   };
 
   const handleTabClose = (id: string) => {
     const newOpenPapers = openPapers.filter((paper) => paper.id !== id);
     setOpenPapers(newOpenPapers);
+    
+    // If we're closing the currently active tab, switch to another tab
     if (id === activePaperId && newOpenPapers.length > 0) {
-      router.push(`/reader/${newOpenPapers[0].id}`);
+      // Find the index of the closed tab to determine which tab to switch to
+      const closedTabIndex = openPapers.findIndex(p => p.id === id);
+      let nextTabIndex = closedTabIndex;
+      
+      // If we closed the last tab, go to the previous one
+      if (nextTabIndex >= newOpenPapers.length) {
+        nextTabIndex = newOpenPapers.length - 1;
+      }
+      
+      // Switch to the next tab without navigation - instant switching!
+      const nextPaperId = newOpenPapers[nextTabIndex].id;
+      setActivePaperId(nextPaperId);
+      window.history.replaceState(null, '', `/reader/${nextPaperId}`);
     } else if (newOpenPapers.length === 0) {
-       router.push('/'); // Go home if no papers left
+      // If no tabs left, clear active paper and show blank state within the same component
+      setActivePaperId('');
+      // Clear the URL to remove the paper ID when all tabs are closed
+      window.history.replaceState(null, '', '/reader');
     }
   };
 
@@ -265,22 +290,10 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     setCopilotChatOpen(true);
   };
 
-  // Effect to handle sidebar on resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setShowSidebar(false)
-      } else {
-        setShowSidebar(true)
-      }
-    }
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
 
-  // Show loading state
-  if (loading) {
+  // Show loading state only for initial load
+  if (initialLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -291,8 +304,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // Show not found state
-  if (!loading && !paper) {
+  // Show not found state only when there's a paper ID in URL but it failed to load
+  if (!initialLoading && paperIdFromUrl && !currentPaper && openPapers.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -306,17 +319,14 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // Ensure paper is not null before rendering
-  if (!paper) return null; 
-
-  // Display the PDF if filePath exists
-  return (
-    <div className="flex flex-col min-h-screen bg-ivory">
-      {/* Header */}
-      <header className="border-b shadow-sm bg-white">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
+  // Show blank state if no tabs are open (regardless of current paper)
+  if (openPapers.length === 0) {
+    return (
+      <div className="flex flex-col min-h-screen bg-ivory">
+        {/* Header */}
+        <header className="border-b shadow-sm bg-white">
+          <div className="container flex h-16 items-center px-4 md:px-6 relative">
+            <Link href="/" className="flex items-center gap-2 mr-8">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -324,104 +334,173 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                 Eureka
               </span>
             </Link>
+            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
+              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+            </nav>
           </div>
-          <nav className="hidden md:flex gap-6">
-            <Link href="/" className="font-sans font-medium text-royal-500 hover:text-royal-600">Home</Link>
+        </header>
+
+        {/* Paper Tabs */}
+        <PaperTabs
+          papers={openPapers.map(p => ({ id: p.id, title: p.title }))}
+          activePaperId={activePaperId}
+          onTabChange={handleTabChange}
+          onTabClose={handleTabClose}
+        />
+
+        {/* Main Content with Sidebar */}
+        <div className="flex flex-1 overflow-hidden">
+          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-6 max-w-md">
+              <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
+                <BookOpen className="h-12 w-12" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-gray-800">No Tabs Open</h1>
+                <p className="text-gray-500">
+                  Click on a paper from the sidebar to open a new tab, or upload a new paper to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  } 
+
+  // Safety check for currentPaper (should not happen given the logic above)
+  if (!currentPaper) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Error</h1>
+          <p className="text-gray-500 mb-6">Unable to load paper data.</p>
+          <Link href="/reader">
+            <Button>Go to Reader</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Display the PDF if filePath exists
+  return (
+    <div className="flex flex-col min-h-screen bg-ivory">
+      {/* Header */}
+      <header className="border-b shadow-sm bg-white">
+        <div className="container flex h-16 items-center px-4 md:px-6 relative">
+          <Link href="/" className="flex items-center gap-2 mr-8">
+            <div className="bg-royal-500 p-1.5 rounded-lg">
+              <BookOpen className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-sans font-bold text-royal-500">
+              Eureka
+            </span>
+          </Link>
+          <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
             <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-            <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+            <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" className="font-sans font-medium text-royal-500 border-royal-200 rounded-lg shadow-sm hover:shadow bg-white">Log in</Button>
-            <Button size="sm" className="font-sans font-bold bg-royal-500 hover:bg-royal-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all">Sign up</Button>
-          </div>
         </div>
       </header>
 
-      {/* Paper Tabs */}
-      <PaperTabs
-        papers={openPapers}
-        activePaperId={activePaperId}
-        onTabChange={handleTabChange}
-        onTabClose={handleTabClose}
-      />
+              {/* Paper Tabs */}
+        <PaperTabs
+          papers={openPapers.map(p => ({ id: p.id, title: p.title }))}
+          activePaperId={activePaperId}
+          onTabChange={handleTabChange}
+          onTabClose={handleTabClose}
+        />
 
-      {/* Main Content with Sidebar */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+        {/* Main Content with Sidebar */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <main className="py-8">
-            <div className="container max-w-7xl mx-auto px-4">
-              {/* Paper Metadata */}
-              <div className="mb-8 space-y-4">
-                <h1 className="text-3xl font-serif font-bold text-black">{paper.title}</h1>
-                {paper.authors && paper.authors.length > 0 && (
-                  <div className="text-gray-500">
-                    <p>{Array.isArray(paper.authors) ? paper.authors.join(', ') : paper.authors}</p>
-                    {paper.venue && paper.year && (
-                      <p className="mt-1">
-                        {paper.venue}, {paper.year}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {paper.url && (
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={paper.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex items-center"
-                    >
-                      View original paper <ExternalLink className="ml-1 h-3 w-3" />
-                    </a>
-                  </div>
-                )}
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Fixed Paper Metadata */}
+            <div className="bg-ivory px-4 py-6 flex-shrink-0">
+              <div className="container max-w-7xl mx-auto">
+                {/* Paper Metadata */}
+                <div className="space-y-4">
+                  <h1 className="text-3xl font-serif font-bold text-black">{currentPaper.title}</h1>
+                  {currentPaper.authors && currentPaper.authors.length > 0 && (
+                    <div className="text-gray-500">
+                      <p>{Array.isArray(currentPaper.authors) ? currentPaper.authors.join(', ') : currentPaper.authors}</p>
+                      {currentPaper.venue && currentPaper.year && (
+                        <p className="mt-1">
+                          {currentPaper.venue}, {currentPaper.year}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {currentPaper.url && (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={currentPaper.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex items-center"
+                      >
+                        View original paper <ExternalLink className="ml-1 h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
 
-              {/* PDF Viewer for uploaded PDFs - pass correct paperId */}
-              {paper.filePath && (
-                <div className="mb-8 w-full">
-                  <PDFViewer 
-                    url={paper.filePath} 
-                    fileName={paper.originalName || paper.title}
-                    paperId={activePaperId}
-                    onAddToCopilotChat={handleAddToCopilotChat}
-                  />
-                </div>
-              )}
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-auto">
+              <main className="py-8">
+                <div className="container max-w-7xl mx-auto px-4">
+                  {/* PDF Viewer for uploaded PDFs - pass correct paperId */}
+                  {currentPaper.filePath && (
+                    <div className="mb-8 w-full">
+                      <PDFViewer 
+                        url={currentPaper.filePath} 
+                        fileName={currentPaper.originalName || currentPaper.title}
+                        paperId={activePaperId}
+                        onAddToCopilotChat={handleAddToCopilotChat}
+                      />
+                    </div>
+                  )}
 
-              {/* Abstract */}
-              {paper.abstract && (
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
-                  <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
-                    {paper.abstract}
-                  </div>
-                </div>
-              )}
-
-              {/* Paper Content - only show for mock data or extracted content */}
-              {paper.sections && paper.sections.length > 0 && (
-                <div className="space-y-8">
-                  {paper.sections.map((section: any, index: number) => (
-                    <div key={index} className="space-y-4">
-                      <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
-                      <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
-                        {section.content}
+                  {/* Abstract */}
+                  {currentPaper.abstract && (
+                    <div className="mb-8">
+                      <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
+                      <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
+                        {currentPaper.abstract}
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Paper Content - only show for mock data or extracted content */}
+                  {currentPaper.sections && currentPaper.sections.length > 0 && (
+                    <div className="space-y-8">
+                      {currentPaper.sections.map((section: any, index: number) => (
+                        <div key={index} className="space-y-4">
+                          <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
+                            {section.content}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </main>
             </div>
-          </main>
+          </div>
         </div>
-      </div>
 
       {/* Floating Copilot Chat Button */}
       <div className="fixed bottom-6 right-6 z-50">

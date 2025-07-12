@@ -54,7 +54,7 @@ export default function PalantirIntegration() {
               <div className="grid gap-2 max-h-96 overflow-y-auto">
                 {textClips.map((clip, index) => (
                   <Card key={index} className="p-3">
-                    <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">
                       {JSON.stringify(clip, null, 2)}
                     </pre>
                   </Card>

@@ -589,17 +589,17 @@ export default function SemanticGraph({
 
       {/* Selected Node Info */}
       {selectedNode && (
-        <Card className="mt-4 border-royal-200 bg-white dark:bg-slate-800">
+        <Card className="mt-4 border-royal-200 bg-white">
           <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="font-semibold text-royal-700 dark:text-royal-200 mb-1">
+                <h3 className="font-semibold text-royal-700 mb-1">
                   {selectedNode.paperTitle}
                 </h3>
-                <p className="text-sm text-gray-800 dark:text-gray-100 mb-2">
+                <p className="text-sm text-gray-800 mb-2">
                   {selectedNode.text}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500">
                   Clipped on {new Date(selectedNode.createdAt).toLocaleDateString()}
                 </p>
               </div>

@@ -99,20 +99,21 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
         </div>
       </div>
 
-      {/* Zoom Controls */}
+      {/* Fixed Zoom Controls - Bottom Center */}
       {numPages && !pdfError && (
-        <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-elegant">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 bg-white rounded-lg shadow-lg border border-gray-200">
           <Button 
             onClick={() => changeScale(-0.2)}
             disabled={scale <= 0.5}
             variant="outline"
             size="sm"
+            className="h-8 w-8 p-0"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
           
-          <span className="text-sm font-medium">
-            {Math.round(scale * 100)}%
+          <span className="text-sm font-medium min-w-[50px] text-center">
+            {Math.round((scale / 2.0) * 100)}%
           </span>
           
           <Button 
@@ -120,13 +121,16 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
             disabled={scale >= 3.0}
             variant="outline"
             size="sm"
+            className="h-8 w-8 p-0"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
           
-          <span className="text-sm text-gray-500">
-            Page 1 of {numPages}
-          </span>
+          <div className="border-l border-gray-300 pl-3 ml-2">
+            <span className="text-xs text-gray-500">
+              Page 1 of {numPages}
+            </span>
+          </div>
         </div>
       )}
     </div>

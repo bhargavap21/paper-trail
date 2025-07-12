@@ -132,7 +132,7 @@ export default function SearchPage() {
         throw new Error(data.error)
       }
       
-      // Open the library page in a new tab with the extracted paper
+      // Open the reader page with the extracted paper
       window.open(`/reader/${data.paperId}`, '_blank')
       
     } catch (error) {
@@ -167,31 +167,24 @@ export default function SearchPage() {
     <div className="flex flex-col min-h-screen bg-ivory">
       {/* Header */}
       <header className="border-b shadow-sm bg-white">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="bg-royal-500 p-1.5 rounded-lg flex items-center">
-                <BookOpen className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-sans font-bold text-royal-500">Eureka</span>
-            </Link>
-          </div>
-          <nav className="hidden md:flex gap-6">
-            <Link href="/" className="font-sans font-medium text-royal-500 hover:text-royal-600">Home</Link>
+        <div className="container flex h-16 items-center px-4 md:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="bg-royal-500 p-1.5 rounded-lg flex items-center">
+              <BookOpen className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-sans font-bold text-royal-500">Eureka</span>
+          </Link>
+          <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
             <Link href="/reader" className="font-sans font-medium text-royal-500 hover:text-royal-600">Reader</Link>
             <Link href="/search" className="font-sans font-bold text-royal-700 underline underline-offset-4">Search</Link>
             <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" className="font-sans font-medium text-royal-500 border-royal-200 rounded-lg shadow-sm hover:shadow bg-white">Log in</Button>
-            <Button size="sm" className="font-sans font-bold bg-royal-500 hover:bg-royal-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all">Sign up</Button>
-          </div>
         </div>
       </header>
 
       {/* Main Layout with Sidebar */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         {/* Search History Sidebar */}
         <SearchHistorySidebar
           history={history}
@@ -204,8 +197,9 @@ export default function SearchPage() {
         />
 
         {/* Main Content */}
-        <main className="flex-1 py-8 overflow-auto">
-        <div className="container max-w-6xl mx-auto px-4">
+        <main className="absolute inset-0 py-8 overflow-auto pointer-events-none">
+        <div className="flex justify-center w-full h-full">
+          <div className="w-full max-w-4xl px-4 pointer-events-auto">
           {/* Page Header */}
           <div className="flex flex-col items-center space-y-4 text-center mb-10">
             <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-3 text-royal-500">
@@ -232,10 +226,11 @@ export default function SearchPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Textarea
-                  placeholder="e.g., 'What are the latest advances in transformer architectures for natural language processing?' or 'How do large language models handle reasoning tasks?'"
+                  placeholder="Ask your research question here..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="min-h-[100px] resize-none border-royal-200 focus:border-royal-500"
+                  className="min-h-[80px] max-h-[200px] resize-none bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 rounded-2xl px-4 py-3 focus:border-royal-500 focus:ring-2 focus:ring-royal-500 focus:ring-offset-0 transition-all duration-200 shadow-sm"
+                  style={{ fontSize: '20px' }}
                   disabled={isSearching}
                 />
               </div>
@@ -437,6 +432,7 @@ export default function SearchPage() {
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
         </main>
       </div>
