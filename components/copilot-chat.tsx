@@ -30,9 +30,10 @@ interface CopilotChatProps {
   initialContext?: string
   paperId?: string
   autoPrompt?: string
+  forceExpand?: boolean
 }
 
-export default function CopilotChat({ isOpen, onClose, initialContext, paperId, autoPrompt }: CopilotChatProps) {
+export default function CopilotChat({ isOpen, onClose, initialContext, paperId, autoPrompt, forceExpand }: CopilotChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -65,12 +66,33 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
     }
   }, [isOpen, messages.length])
 
+  // Auto-expand when auto-prompt is provided or forceExpand is true
+  useEffect(() => {
+    if ((autoPrompt || forceExpand) && isOpen && isCollapsed) {
+      setIsCollapsed(false)
+    }
+  }, [autoPrompt, forceExpand, isOpen, isCollapsed])
+
   // Handle auto-prompt when text is provided
   useEffect(() => {
     if (autoPrompt && isOpen && !isCollapsed) {
       setInputValue(`What does this mean: "${autoPrompt}"`)
+    } else if (!autoPrompt) {
+      setInputValue('') // Clear input when no auto-prompt
     }
   }, [autoPrompt, isOpen, isCollapsed])
+
+  // Clear input when collapsing/expanding the chat
+  useEffect(() => {
+    if (isCollapsed) {
+      setInputValue('')
+    } else {
+      // Clear input when expanding unless there's an auto-prompt
+      if (!autoPrompt) {
+        setInputValue('')
+      }
+    }
+  }, [isCollapsed, autoPrompt])
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
@@ -187,8 +209,8 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
         </div>
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-blue-600" />
-            <span className="font-sans font-bold text-blue-700">Copilot</span>
+            <span className="font-sans font-bold text-royal-700">Copilot</span>
+            <Bot className="h-5 w-5 text-royal-600" />
             {messages.length > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {messages.length}
@@ -219,7 +241,7 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                       <div
                         className={`max-w-[85%] rounded-lg px-3 py-2 ${
                           message.isUser
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-royal-500 text-white'
                             : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                         }`}
                       >
@@ -231,7 +253,7 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                           )}
                           <span className={cn(
                             "text-xs",
-                            message.isUser ? "text-blue-100" : "text-gray-500"
+                            message.isUser ? "text-royal-100" : "text-gray-500"
                           )}>
                             {formatTime(message.timestamp)}
                           </span>
@@ -271,14 +293,14 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me anything..."
-                className="flex-1 min-h-[40px] max-h-[120px] resize-none text-sm border-gray-300 focus:border-blue-500"
+                className="flex-1 min-h-[40px] max-h-[120px] resize-none text-sm border-gray-300 focus:border-royal-500"
                 rows={1}
               />
               <Button
                 onClick={sendMessage}
                 disabled={!inputValue.trim() || isLoading}
                 size="sm"
-                className="bg-blue-500 hover:bg-blue-600 text-white h-10 px-3"
+                className="bg-royal-500 hover:bg-royal-600 text-white h-10 px-3"
               >
                 <Send className="h-4 w-4" />
               </Button>

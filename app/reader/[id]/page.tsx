@@ -131,6 +131,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [copilotChatOpen, setCopilotChatOpen] = useState(true)
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
+  const [forceExpandCopilot, setForceExpandCopilot] = useState(false)
 
   const { toast } = useToast()
   const router = useRouter()
@@ -287,6 +288,23 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     // Set the auto-prompt text and open copilot chat
     setCopilotAutoPrompt(text);
     setCopilotChatOpen(true);
+    setForceExpandCopilot(true);
+    
+    // Reset force expand after a short delay
+    setTimeout(() => {
+      setForceExpandCopilot(false);
+    }, 100);
+  };
+
+  const handlePaperDeleted = (paperId: string) => {
+    // Close the tab for the deleted paper
+    handleTabClose(paperId);
+  };
+
+  const handleAllPapersDeleted = () => {
+    // Close all tabs
+    setOpenPapers([]);
+    setActivePaperId('');
   };
 
 
@@ -311,7 +329,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           <h1 className="text-2xl font-bold mb-4">Paper not found</h1>
           <p className="text-gray-500 mb-6">The requested paper could not be found.</p>
           <Link href="/reader">
-            <Button>Upload a Paper</Button>
+            <Button className="bg-royal-500 hover:bg-royal-600 text-white">Upload a Paper</Button>
           </Link>
         </div>
       </div>
@@ -324,7 +342,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
-          <div className="container flex h-16 items-center px-4 md:px-6 relative">
+          <div className="flex h-16 items-center px-4 md:px-6 relative">
             <Link href="/" className="flex items-center gap-2 mr-8">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
@@ -354,7 +372,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         <div className="flex-1 relative overflow-hidden">
           {/* Left Sidebar */}
           <div className="absolute left-0 top-0 bottom-0 z-10">
-            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} onPaperDeleted={handlePaperDeleted} onAllPapersDeleted={handleAllPapersDeleted} />
           </div>
 
           {/* Center Content - Always Centered */}
@@ -382,6 +400,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               }}
               paperId={activePaperId}
               autoPrompt={copilotAutoPrompt}
+              forceExpand={forceExpandCopilot}
             />
           </div>
         </div>
@@ -397,7 +416,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           <h1 className="text-2xl font-bold mb-4">Error</h1>
           <p className="text-gray-500 mb-6">Unable to load paper data.</p>
           <Link href="/reader">
-            <Button>Go to Reader</Button>
+            <Button className="bg-royal-500 hover:bg-royal-600 text-white">Go to Reader</Button>
           </Link>
         </div>
       </div>
@@ -409,7 +428,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     <div className="flex flex-col h-screen bg-ivory">
       {/* Header */}
       <header className="border-b shadow-sm bg-white">
-        <div className="container flex h-16 items-center px-4 md:px-6 relative">
+        <div className="flex h-16 items-center px-4 md:px-6 relative">
           <Link href="/" className="flex items-center gap-2 mr-8">
             <div className="bg-royal-500 p-1.5 rounded-lg">
               <BookOpen className="h-5 w-5 text-white" />
@@ -439,7 +458,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         <div className="flex-1 relative overflow-hidden">
           {/* Left Sidebar */}
           <div className="absolute left-0 top-0 bottom-0 z-10">
-            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} onPaperDeleted={handlePaperDeleted} onAllPapersDeleted={handleAllPapersDeleted} />
           </div>
 
           {/* Center Content - Always Centered */}
@@ -498,6 +517,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               }}
               paperId={activePaperId}
               autoPrompt={copilotAutoPrompt}
+              forceExpand={forceExpandCopilot}
             />
           </div>
         </div>

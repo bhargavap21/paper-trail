@@ -36,9 +36,11 @@ interface SavedPaper {
 
 interface UploadPapersSidebarProps {
   onPaperClick?: (paperId: string) => void
+  onPaperDeleted?: (paperId: string) => void
+  onAllPapersDeleted?: () => void
 }
 
-export function UploadPapersSidebar({ onPaperClick }: UploadPapersSidebarProps = {}) {
+export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersDeleted }: UploadPapersSidebarProps = {}) {
   const [papers, setPapers] = useState<SavedPaper[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -100,6 +102,10 @@ export function UploadPapersSidebar({ onPaperClick }: UploadPapersSidebarProps =
       
       if (response.ok) {
         setPapers(papers.filter(paper => paper.id !== paperId))
+        // Notify parent component that a paper was deleted
+        if (onPaperDeleted) {
+          onPaperDeleted(paperId)
+        }
       } else {
         console.error('Failed to delete paper')
       }
@@ -127,6 +133,11 @@ export function UploadPapersSidebar({ onPaperClick }: UploadPapersSidebarProps =
         const data = await response.json()
         setPapers([])
         alert(`Successfully deleted ${data.deletedCount} papers`)
+        
+        // Notify parent component that all papers were deleted
+        if (onAllPapersDeleted) {
+          onAllPapersDeleted()
+        }
         
         // Redirect to reader page (blank state) since all papers are deleted
         router.push('/reader')
@@ -325,7 +336,7 @@ export function UploadPapersSidebar({ onPaperClick }: UploadPapersSidebarProps =
                     <Button
                       onClick={handleFileUpload}
                       disabled={!file || isUploading}
-                      className="w-full"
+                      className="w-full bg-royal-500 hover:bg-royal-600 text-white"
                     >
                       {isUploading ? "Uploading..." : "Upload Paper"}
                     </Button>

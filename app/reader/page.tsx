@@ -3,13 +3,20 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { BookOpen, FileText } from "lucide-react"
 import { UploadPapersSidebar } from "@/components/upload-papers-sidebar"
 
+// Dynamically import CopilotChat
+const CopilotChat = dynamic(() => import('@/components/copilot-chat'), {
+  ssr: false,
+})
+
 export default function ReaderPage() {
   const [papers, setPapers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [copilotChatOpen, setCopilotChatOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -50,8 +57,8 @@ export default function ReaderPage() {
   return (
     <div className="flex flex-col min-h-screen bg-ivory">
       <header className="border-b shadow-sm bg-white">
-        <div className="container flex h-16 items-center px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex h-16 items-center px-4 md:px-6 relative">
+          <Link href="/" className="flex items-center gap-2 mr-8">
             <div className="bg-royal-500 p-1.5 rounded-lg">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
@@ -68,27 +75,36 @@ export default function ReaderPage() {
         </div>
       </header>
 
-      {/* Main Layout with Sidebar */}
-      <div className="flex flex-1">
-        {/* Papers Sidebar */}
-        <UploadPapersSidebar onPaperClick={(paperId) => router.push(`/reader/${paperId}`)} />
+      {/* Main Layout with absolute positioning */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Left Sidebar */}
+        <div className="absolute left-0 top-0 bottom-0 z-10">
+          <UploadPapersSidebar onPaperClick={(paperId) => router.push(`/reader/${paperId}`)} onPaperDeleted={() => {}} onAllPapersDeleted={() => {}} />
+        </div>
 
-        {/* Main Content - Blank Reader View */}
-        <main className="flex-1 overflow-auto relative">
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none" style={{ top: '64px' }}>
-            <div className="text-center space-y-6 max-w-md pointer-events-auto">
-              <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
-                <FileText className="h-12 w-12" />
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-2xl font-bold text-gray-800">No Papers Open</h1>
-                <p className="text-gray-500">
-                  Upload a paper using the sidebar or select an existing paper to start reading.
-                </p>
-              </div>
+        {/* Main Content - Always Centered */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center space-y-6 max-w-md">
+            <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
+              <FileText className="h-12 w-12" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-gray-800">No Papers Open</h1>
+              <p className="text-gray-500">
+                Upload a paper using the sidebar or select an existing paper to start reading.
+              </p>
             </div>
           </div>
-        </main>
+        </div>
+
+        {/* Right Sidebar - Copilot Chat */}
+        <div className="absolute right-0 top-0 bottom-0 z-10">
+          <CopilotChat 
+            isOpen={copilotChatOpen}
+            onClose={() => setCopilotChatOpen(false)}
+            initialContext=""
+          />
+        </div>
       </div>
     </div>
   )

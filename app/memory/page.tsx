@@ -206,8 +206,8 @@ export default function MemoryPage() {
       <div className="flex flex-col min-h-screen bg-ivory">
         {/* Header */}
         <header className="border-b bg-white shadow-sm">
-          <div className="container flex h-16 items-center px-4 md:px-6">
-            <NextLink href="/" className="flex items-center gap-2">
+          <div className="flex h-16 items-center px-4 md:px-6 relative">
+            <NextLink href="/" className="flex items-center gap-2 mr-8">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -240,8 +240,8 @@ export default function MemoryPage() {
       
       {/* Header */}
       <header className="border-b bg-white shadow-sm">
-        <div className="container flex h-16 items-center px-4 md:px-6">
-          <NextLink href="/" className="flex items-center gap-2">
+        <div className="flex h-16 items-center px-4 md:px-6 relative">
+          <NextLink href="/" className="flex items-center gap-2 mr-8">
             <div className="bg-royal-500 p-1.5 rounded-lg">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
