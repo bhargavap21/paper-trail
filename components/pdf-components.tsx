@@ -941,9 +941,9 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
       )}
 
       {/* Main container for PDF and absolutely positioned notes */}
-      <div className="relative w-full flex items-start justify-center" ref={containerRef}>
+      <div className="relative w-full h-full overflow-auto" ref={containerRef}>
         {/* PDF Document Rendering Area */}
-        <div className="pdf-document-area flex-shrink-0">
+        <div className="pdf-document-area flex-shrink-0 flex justify-center">
           <Document
             file={fileUrl}
             onLoadSuccess={handleDocumentLoadSuccess}
@@ -964,7 +964,7 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
             }
             className="w-full"
           >
-            <div className="relative w-full flex flex-col items-center">
+            <div className="relative flex flex-col items-center">
               {showAllPages
                 ? Array.from(new Array(numPages), (_, index) => renderPage(index + 1))
                 : renderPage(pageNumber)

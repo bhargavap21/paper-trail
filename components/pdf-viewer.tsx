@@ -56,9 +56,9 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
   const isTextFile = url.endsWith('.txt')
   
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="bg-white rounded-lg shadow-elegant p-4 mb-4 w-full max-w-full">
-        <div className="min-h-[80vh] overflow-auto">
+    <div className="w-full h-full">
+      <div className="bg-white rounded-lg shadow-elegant p-4 w-full h-full flex flex-col">
+        <div className="flex-1 overflow-auto">
           {pdfError && !isValidPdf ? (
             <div className="flex flex-col items-center justify-center h-96 text-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">

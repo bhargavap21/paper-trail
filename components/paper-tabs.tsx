@@ -18,9 +18,9 @@ interface PaperTabsProps {
 
 export function PaperTabs({ papers, activePaperId, onTabChange, onTabClose }: PaperTabsProps) {
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-[40px]">
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex w-max space-x-0">
+        <div className="flex w-max space-x-0 min-h-[40px]">
           {papers.map((paper) => (
             <div
               key={paper.id}

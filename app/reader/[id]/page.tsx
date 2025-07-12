@@ -129,7 +129,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   const [activePaperId, setActivePaperId] = useState(paperIdFromUrl || "")
   const [openPapers, setOpenPapers] = useState<Array<{ id: string; title: string; paper: PaperType }>>([])
   const [initialLoading, setInitialLoading] = useState(true);
-  const [copilotChatOpen, setCopilotChatOpen] = useState(false)
+  const [copilotChatOpen, setCopilotChatOpen] = useState(true)
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
 
   const { toast } = useToast()
@@ -279,8 +279,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     } else if (newOpenPapers.length === 0) {
       // If no tabs left, clear active paper and show blank state within the same component
       setActivePaperId('');
-      // Clear the URL to remove the paper ID when all tabs are closed
-      window.history.replaceState(null, '', '/reader');
+      // DON'T change the URL - keep the current URL to stay on the same component
     }
   };
 
@@ -295,7 +294,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   // Show loading state only for initial load
   if (initialLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <h2 className="text-xl font-medium text-gray-600">Loading paper...</h2>
@@ -304,10 +303,10 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // Show not found state only when there's a paper ID in URL but it failed to load
-  if (!initialLoading && paperIdFromUrl && !currentPaper && openPapers.length === 0) {
+  // Show not found state only when there's a paper ID in URL but it failed to load AND we're not in a tab-closed state
+  if (!initialLoading && paperIdFromUrl && !currentPaper && openPapers.length === 0 && activePaperId !== '') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Paper not found</h1>
           <p className="text-gray-500 mb-6">The requested paper could not be found.</p>
@@ -322,7 +321,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   // Show blank state if no tabs are open (regardless of current paper)
   if (openPapers.length === 0) {
     return (
-      <div className="flex flex-col min-h-screen bg-ivory">
+      <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
           <div className="container flex h-16 items-center px-4 md:px-6 relative">
@@ -351,10 +350,15 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           onTabClose={handleTabClose}
         />
 
-        {/* Main Content with Sidebar */}
-        <div className="flex flex-1 overflow-hidden">
-          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
-          <div className="flex-1 flex items-center justify-center">
+        {/* Main Content with Sidebars */}
+        <div className="flex-1 relative overflow-hidden">
+          {/* Left Sidebar - Fixed Position */}
+          <div className="absolute left-0 top-0 bottom-0 z-10">
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+          </div>
+
+          {/* Content Area - Always Centered */}
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -367,6 +371,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               </div>
             </div>
           </div>
+
+          {/* Right Sidebar - Fixed Position */}
+          <div className="absolute right-0 top-0 bottom-0 z-10">
+            <CopilotChat
+              isOpen={true}
+              onClose={() => {
+                setCopilotChatOpen(false);
+                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+              }}
+              paperId={activePaperId}
+              autoPrompt={copilotAutoPrompt}
+            />
+          </div>
         </div>
       </div>
     );
@@ -375,7 +392,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   // Safety check for currentPaper (should not happen given the logic above)
   if (!currentPaper) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Error</h1>
           <p className="text-gray-500 mb-6">Unable to load paper data.</p>
@@ -389,7 +406,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
   // Display the PDF if filePath exists
   return (
-    <div className="flex flex-col min-h-screen bg-ivory">
+    <div className="flex flex-col h-screen bg-ivory">
       {/* Header */}
       <header className="border-b shadow-sm bg-white">
         <div className="container flex h-16 items-center px-4 md:px-6 relative">
@@ -418,61 +435,31 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           onTabClose={handleTabClose}
         />
 
-        {/* Main Content with Sidebar */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+        {/* Main Content with Sidebars */}
+        <div className="flex-1 relative overflow-hidden">
+          {/* Left Sidebar - Fixed Position */}
+          <div className="absolute left-0 top-0 bottom-0 z-10">
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} />
+          </div>
 
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Fixed Paper Metadata */}
-            <div className="bg-ivory px-4 py-6 flex-shrink-0">
-              <div className="container max-w-7xl mx-auto">
-                {/* Paper Metadata */}
-                <div className="space-y-4">
-                  <h1 className="text-3xl font-serif font-bold text-black">{currentPaper.title}</h1>
-                  {currentPaper.authors && currentPaper.authors.length > 0 && (
-                    <div className="text-gray-500">
-                      <p>{Array.isArray(currentPaper.authors) ? currentPaper.authors.join(', ') : currentPaper.authors}</p>
-                      {currentPaper.venue && currentPaper.year && (
-                        <p className="mt-1">
-                          {currentPaper.venue}, {currentPaper.year}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {currentPaper.url && (
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={currentPaper.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline flex items-center"
-                      >
-                        View original paper <ExternalLink className="ml-1 h-3 w-3" />
-                      </a>
-                    </div>
-                  )}
-                </div>
+          {/* Content Area - Always Centered */}
+          <div className="absolute inset-0 flex justify-center overflow-hidden">
+            {/* PDF Viewer - Centered Container */}
+            {currentPaper.filePath && (
+              <div className="w-full max-w-6xl overflow-hidden">
+                <PDFViewer 
+                  url={currentPaper.filePath} 
+                  fileName={currentPaper.originalName || currentPaper.title}
+                  paperId={activePaperId}
+                  onAddToCopilotChat={handleAddToCopilotChat}
+                />
               </div>
-            </div>
+            )}
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-auto">
-              <main className="py-8">
-                <div className="container max-w-7xl mx-auto px-4">
-                  {/* PDF Viewer for uploaded PDFs - pass correct paperId */}
-                  {currentPaper.filePath && (
-                    <div className="mb-8 w-full">
-                      <PDFViewer 
-                        url={currentPaper.filePath} 
-                        fileName={currentPaper.originalName || currentPaper.title}
-                        paperId={activePaperId}
-                        onAddToCopilotChat={handleAddToCopilotChat}
-                      />
-                    </div>
-                  )}
-
+            {/* Abstract and Sections - Centered (only if no PDF) */}
+            {!currentPaper.filePath && (
+              <div className="w-full max-w-6xl overflow-auto">
+                <main className="py-8 px-4">
                   {/* Abstract */}
                   {currentPaper.abstract && (
                     <div className="mb-8">
@@ -496,33 +483,24 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                       ))}
                     </div>
                   )}
-                </div>
-              </main>
-            </div>
+                </main>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar - Fixed Position */}
+          <div className="absolute right-0 top-0 bottom-0 z-10">
+            <CopilotChat
+              isOpen={true}
+              onClose={() => {
+                setCopilotChatOpen(false);
+                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+              }}
+              paperId={activePaperId}
+              autoPrompt={copilotAutoPrompt}
+            />
           </div>
         </div>
-
-      {/* Floating Copilot Chat Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={() => setCopilotChatOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200"
-          size="lg"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
       </div>
-
-      {/* Copilot Chat */}
-      <CopilotChat
-        isOpen={copilotChatOpen}
-        onClose={() => {
-          setCopilotChatOpen(false);
-          setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-        }}
-        paperId={activePaperId}
-        autoPrompt={copilotAutoPrompt}
-      />
-    </div>
-  )
-}
+    )
+  }
