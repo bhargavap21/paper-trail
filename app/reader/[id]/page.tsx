@@ -214,16 +214,28 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
     // Only fetch if we have a paper ID from URL and it's not already loaded
     // Don't auto-load if activePaperId is explicitly empty (user closed all tabs)
-    if (paperIdFromUrl && !openPapers.some(p => p.id === paperIdFromUrl) && hasHydrated && activePaperId !== '') {
+    if (paperIdFromUrl && !openPapers.some(p => p.id === paperIdFromUrl) && hasHydrated) {
       fetchInitialPaper(paperIdFromUrl);
-    } else if (paperIdFromUrl && openPapers.some(p => p.id === paperIdFromUrl) && openPapers.length > 0) {
-      // Paper is already loaded, just switch to it (but only if there are open papers)
+    } else if (paperIdFromUrl && openPapers.some(p => p.id === paperIdFromUrl) && openPapers.length > 0 && activePaperId !== paperIdFromUrl) {
+      // Paper is already loaded, just switch to it (but only if it's not already active)
       setActivePaperId(paperIdFromUrl);
     }
     
-      }, [paperIdFromUrl, openPapers, addPaper, setActivePaperId, toast, activePaperId, hasHydrated]);
+      }, [paperIdFromUrl, openPapers, addPaper, setActivePaperId, toast, hasHydrated]);
 
   const handleTabChange = (id: string) => {
+    // Only proceed if the tab is actually changing
+    if (id === activePaperId) {
+      return;
+    }
+    
+    // Verify the paper exists in open papers
+    const paperExists = openPapers.some(p => p.id === id);
+    if (!paperExists) {
+      console.error('Paper not found in open papers:', id);
+      return;
+    }
+    
     // Just switch tabs without navigation - instant switching!
     setActivePaperId(id);
     // Update URL without page reload
