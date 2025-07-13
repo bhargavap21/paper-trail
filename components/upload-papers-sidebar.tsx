@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { 
+import {
   FileText, 
   Search, 
   Calendar,
@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  Plus
+  Plus,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -57,6 +58,38 @@ export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersD
     loadSavedPapers()
   }, [])
 
+  // Refresh papers when window regains focus (when user comes back to the app)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadSavedPapers()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
+  // Also refresh papers periodically to catch updates from other users
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadSavedPapers()
+    }, 30000) // Refresh every 30 seconds
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  // Refresh papers when navigating back to reader view
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible again, refresh papers
+        loadSavedPapers()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
   useEffect(() => {
     if (searchQuery.trim()) {
       const filtered = papers.filter(paper => 
@@ -70,11 +103,15 @@ export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersD
   }, [searchQuery, papers])
 
   const loadSavedPapers = async () => {
+    console.log('📄 Loading papers from MongoDB...')
+    setIsLoading(true)
     try {
       const response = await fetch('/api/papers')
       if (response.ok) {
         const data = await response.json()
-        setPapers(data.papers || [])
+        const papersList = data.papers || []
+        console.log(`📄 Loaded ${papersList.length} papers from MongoDB:`, papersList.map((p: SavedPaper) => p.title))
+        setPapers(papersList)
       } else {
         console.error('Failed to load papers:', response.statusText)
         setPapers([])
@@ -287,17 +324,28 @@ export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersD
           )}
           <div className="flex items-center gap-1">
             {!isCollapsed && (
-              <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 w-7 p-0 border-royal-200 hover:bg-royal-50"
-                    title="Upload Paper"
-                  >
-                    <Plus className="h-4 w-4 text-royal-600" />
-                  </Button>
-                </DialogTrigger>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadSavedPapers}
+                  disabled={isLoading}
+                  className="h-7 w-7 p-0 border-royal-200 hover:bg-royal-50"
+                  title="Refresh Papers from MongoDB"
+                >
+                  <RefreshCw className={cn("h-4 w-4 text-royal-600", isLoading && "animate-spin")} />
+                </Button>
+                <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 w-7 p-0 border-royal-200 hover:bg-royal-50"
+                      title="Upload Paper"
+                    >
+                      <Plus className="h-4 w-4 text-royal-600" />
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Upload Paper</DialogTitle>
@@ -338,6 +386,7 @@ export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersD
                   </div>
                 </DialogContent>
               </Dialog>
+              </>
             )}
             <Button
               variant="ghost"

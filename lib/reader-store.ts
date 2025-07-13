@@ -17,11 +17,13 @@ export interface PaperType {
 interface ReaderState {
   openPapers: Array<{ id: string; title: string; paper: PaperType }>;
   activePaperId: string;
+  hasHydrated: boolean;
   setOpenPapers: (papers: Array<{ id: string; title: string; paper: PaperType }>) => void;
   setActivePaperId: (id: string) => void;
   addPaper: (paper: { id: string; title: string; paper: PaperType }) => void;
   removePaper: (id: string) => void;
   clearAllPapers: () => void;
+  setHasHydrated: (hydrated: boolean) => void;
 }
 
 export const useReaderStore = create<ReaderState>()(
@@ -29,6 +31,7 @@ export const useReaderStore = create<ReaderState>()(
     (set, get) => ({
       openPapers: [],
       activePaperId: '',
+      hasHydrated: false,
       setOpenPapers: (papers) => set({ openPapers: papers }),
       setActivePaperId: (id) => set({ activePaperId: id }),
       addPaper: (paper) => set((state) => {
@@ -41,12 +44,14 @@ export const useReaderStore = create<ReaderState>()(
         openPapers: state.openPapers.filter(p => p.id !== id),
         activePaperId: state.activePaperId === id ? '' : state.activePaperId
       })),
-      clearAllPapers: () => set({ openPapers: [], activePaperId: '' })
+      clearAllPapers: () => set({ openPapers: [], activePaperId: '' }),
+      setHasHydrated: (hydrated) => set({ hasHydrated: hydrated })
     }),
     {
       name: 'reader-tabs-storage',
-      // Only persist on client side
-      skipHydration: true,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 ) 
