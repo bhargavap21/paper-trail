@@ -35,13 +35,15 @@ interface SemanticGraphProps {
   graphData: GraphData;
   onNodeClick?: (node: GraphNode) => void;
   onNodeDelete?: (nodeId: string) => void;
+  onEdgeClick?: (edge: GraphEdge, sourceNode: GraphNode, targetNode: GraphNode, position?: { x: number; y: number }) => void;
   height?: string;
 }
 
-export default function SemanticGraph({ 
+const SemanticGraph = React.memo(function SemanticGraph({ 
   graphData, 
   onNodeClick, 
   onNodeDelete,
+  onEdgeClick,
   height = "600px" 
 }: SemanticGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -398,6 +400,53 @@ export default function SemanticGraph({
       }
     });
 
+    // Edge click handler
+    cy.on('tap', 'edge', (evt) => {
+      const edge = evt.target;
+      const edgeData = edge.data();
+      
+      if (onEdgeClick) {
+        // Get click position
+        const renderedPosition = evt.renderedPosition || evt.position;
+        const position = {
+          x: renderedPosition.x,
+          y: renderedPosition.y
+        };
+        
+        // Find the source and target nodes
+        const sourceNode = cy.getElementById(edgeData.source);
+        const targetNode = cy.getElementById(edgeData.target);
+        
+        const sourceData = sourceNode.data();
+        const targetData = targetNode.data();
+        
+        const edgeInfo: GraphEdge = {
+          id: edgeData.id,
+          source: edgeData.source,
+          target: edgeData.target,
+          weight: edgeData.weight
+        };
+        
+        const sourceNodeInfo: GraphNode = {
+          id: sourceData.id,
+          text: sourceData.fullText,
+          paperId: sourceData.paperId,
+          paperTitle: sourceData.paperTitle,
+          createdAt: sourceData.createdAt
+        };
+        
+        const targetNodeInfo: GraphNode = {
+          id: targetData.id,
+          text: targetData.fullText,
+          paperId: targetData.paperId,
+          paperTitle: targetData.paperTitle,
+          createdAt: targetData.createdAt
+        };
+        
+        onEdgeClick(edgeInfo, sourceNodeInfo, targetNodeInfo, position);
+      }
+    });
+
     // Add tooltip on hover
     cy.on('mouseover', 'node', (evt) => {
       const node = evt.target;
@@ -438,7 +487,7 @@ export default function SemanticGraph({
       const tooltips = document.querySelectorAll('.cytoscape-tooltip');
       tooltips.forEach(tooltip => tooltip.remove());
     };
-  }, [graphData, onNodeClick]);
+  }, [graphData]);
 
   // Handle search
   useEffect(() => {
@@ -638,4 +687,10 @@ export default function SemanticGraph({
       </div>
     </div>
   );
-} 
+}, (prevProps, nextProps) => {
+  // Only re-render if graphData actually changes
+  return JSON.stringify(prevProps.graphData) === JSON.stringify(nextProps.graphData) &&
+         prevProps.height === nextProps.height;
+});
+
+export default SemanticGraph;

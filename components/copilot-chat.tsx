@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Slider } from '@/components/ui/slider'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import { 
   Send, 
   Bot, 
@@ -33,6 +38,15 @@ interface Message {
   timestamp: Date
   toolUsed?: string
   toolResult?: any
+}
+
+interface GraphGenerationWorkflow {
+  isActive: boolean
+  step: 'topic' | 'clipCount' | 'graphSelection' | 'processing' | 'complete'
+  topic: string
+  clipCount: number
+  selectedGraphId: string
+  availableGraphs: Array<{ id: string; name: string }>
 }
 
 interface Tool {
@@ -79,6 +93,14 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null)
   const [showTools, setShowTools] = useState(false)
+  const [graphWorkflow, setGraphWorkflow] = useState<GraphGenerationWorkflow>({
+    isActive: false,
+    step: 'topic',
+    topic: '',
+    clipCount: 5,
+    selectedGraphId: '',
+    availableGraphs: []
+  })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -192,11 +214,13 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
         }
         
       case 'graph-generation':
+        // Initialize graph generation workflow
+        await initializeGraphGeneration()
         return {
           type: 'graph',
-          status: 'placeholder',
-          message: `Graph generation tool activated for: "${prompt}". This is a placeholder - graph generation will be implemented soon.`,
-          placeholder: true
+          status: 'workflow',
+          message: `Starting graph generation workflow. Please follow the steps below to configure your graph generation.`,
+          workflow: true
         }
       default:
         return {
@@ -276,6 +300,101 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
 
     // Start polling after a short delay
     setTimeout(poll, 5000)
+  }
+
+  const initializeGraphGeneration = async () => {
+    // Fetch available memory graphs
+    try {
+      const response = await fetch('/api/memory/graphs')
+      const graphs = await response.json()
+      
+      setGraphWorkflow({
+        isActive: true,
+        step: 'topic',
+        topic: '',
+        clipCount: 5,
+        selectedGraphId: '',
+        availableGraphs: graphs.map((g: any) => ({ id: g.id, name: g.name }))
+      })
+    } catch (error) {
+      console.error('Error fetching graphs:', error)
+      setGraphWorkflow({
+        isActive: true,
+        step: 'topic',
+        topic: '',
+        clipCount: 5,
+        selectedGraphId: '',
+        availableGraphs: []
+      })
+    }
+  }
+
+  const executeGraphGeneration = async () => {
+    if (!paperId || !graphWorkflow.topic || !graphWorkflow.selectedGraphId) {
+      return
+    }
+
+    setGraphWorkflow(prev => ({ ...prev, step: 'processing' }))
+
+    try {
+      const response = await fetch('/api/graph-generation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paperId,
+          topic: graphWorkflow.topic,
+          clipCount: graphWorkflow.clipCount,
+          graphId: graphWorkflow.selectedGraphId
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        const successMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `✅ Graph generation completed successfully!\n\nAdded ${result.addedClips.length} clips to "${result.graphName}" graph.\nCreated ${result.newEdges.length} new connections.\n\nTopic: "${graphWorkflow.topic}"\nClips generated: ${result.addedClips.length}`,
+          isUser: false,
+          timestamp: new Date(),
+          toolResult: {
+            type: 'graph',
+            status: 'success',
+            data: result
+          }
+        }
+        setMessages(prev => [...prev, successMessage])
+        setGraphWorkflow(prev => ({ ...prev, step: 'complete', isActive: false }))
+      } else {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `❌ Graph generation failed: ${result.error}`,
+          isUser: false,
+          timestamp: new Date(),
+          toolResult: {
+            type: 'graph',
+            status: 'error',
+            error: result.error
+          }
+        }
+        setMessages(prev => [...prev, errorMessage])
+        setGraphWorkflow(prev => ({ ...prev, step: 'topic', isActive: false }))
+      }
+    } catch (error) {
+      console.error('Graph generation error:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `❌ Graph generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        isUser: false,
+        timestamp: new Date(),
+        toolResult: {
+          type: 'graph',
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      }
+      setMessages(prev => [...prev, errorMessage])
+      setGraphWorkflow(prev => ({ ...prev, step: 'topic', isActive: false }))
+    }
   }
 
   const sendMessage = async () => {
@@ -469,6 +588,21 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
               Placeholder
             </Badge>
           )}
+          {toolResult.workflow && (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+              Workflow
+            </Badge>
+          )}
+          {toolResult.status === 'success' && (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+              Success
+            </Badge>
+          )}
+          {toolResult.status === 'error' && (
+            <Badge variant="outline" className="text-xs bg-red-50 text-red-700">
+              Error
+            </Badge>
+          )}
         </div>
         
         {toolResult.message && (
@@ -573,9 +707,33 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           </div>
         )}
         
+        {toolResult.workflow && (
+          <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded border-l-4 border-blue-400">
+            Use the workflow panel above to configure and run graph generation.
+          </div>
+        )}
+        
+        {toolResult.status === 'success' && toolResult.data && (
+          <div className="text-sm text-gray-600 bg-green-50 p-2 rounded border-l-4 border-green-400">
+            <div className="font-medium mb-1">Graph Generation Complete</div>
+            <div className="text-xs space-y-1">
+              <div>Added to: {toolResult.data.graphName}</div>
+              <div>Clips generated: {toolResult.data.addedClips.length}</div>
+              <div>New connections: {toolResult.data.newEdges.length}</div>
+            </div>
+          </div>
+        )}
+        
         {toolResult.error && (
           <div className="text-sm text-red-600 bg-red-50 p-2 rounded border-l-4 border-red-400">
             ❌ {toolResult.message}
+          </div>
+        )}
+        
+        {toolResult.status === 'error' && toolResult.error && (
+          <div className="text-sm text-gray-600 bg-red-50 p-2 rounded border-l-4 border-red-400">
+            <div className="font-medium mb-1">Generation Failed</div>
+            <div className="text-xs">{toolResult.error}</div>
           </div>
         )}
       </div>
@@ -752,6 +910,110 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                   Methodology
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* Graph Generation Workflow */}
+          {graphWorkflow.isActive && (
+            <div className="p-3 pl-4 border-t border-gray-200 bg-white">
+              <Card className="border-royal-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-green-500" />
+                    Graph Generation Setup
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Configure how to extract and add content to your memory graph
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Step 1: Topic */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">
+                      1. What topics should I focus on?
+                    </Label>
+                    <Input
+                      placeholder="e.g., latent space, neural networks, attention mechanisms"
+                      value={graphWorkflow.topic}
+                      onChange={(e) => setGraphWorkflow(prev => ({ ...prev, topic: e.target.value }))}
+                      className="text-xs"
+                      disabled={graphWorkflow.step === 'processing'}
+                    />
+                  </div>
+
+                  {/* Step 2: Clip Count */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">
+                      2. How many clips to generate? ({graphWorkflow.clipCount})
+                    </Label>
+                    <Slider
+                      value={[graphWorkflow.clipCount]}
+                      onValueChange={(value) => setGraphWorkflow(prev => ({ ...prev, clipCount: value[0] }))}
+                      min={1}
+                      max={20}
+                      step={1}
+                      className="w-full"
+                      disabled={graphWorkflow.step === 'processing'}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>1</span>
+                      <span>20</span>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Graph Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">
+                      3. Which memory graph to add to?
+                    </Label>
+                    <Select 
+                      value={graphWorkflow.selectedGraphId} 
+                      onValueChange={(value) => setGraphWorkflow(prev => ({ ...prev, selectedGraphId: value }))}
+                      disabled={graphWorkflow.step === 'processing'}
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue placeholder="Select a memory graph" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {graphWorkflow.availableGraphs.map((graph) => (
+                          <SelectItem key={graph.id} value={graph.id}>
+                            {graph.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Generate Button */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      onClick={executeGraphGeneration}
+                      disabled={!graphWorkflow.topic || !graphWorkflow.selectedGraphId || graphWorkflow.step === 'processing'}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs"
+                    >
+                      {graphWorkflow.step === 'processing' ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <BarChart3 className="h-3 w-3 mr-2" />
+                          Generate Graph
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setGraphWorkflow(prev => ({ ...prev, isActive: false }))}
+                      variant="outline"
+                      className="text-xs"
+                      disabled={graphWorkflow.step === 'processing'}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
