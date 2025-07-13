@@ -1,0 +1,3 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/bhargavap/Downloads/untitled folder 3/manim_video_generation-main/debug_clips/videos/tmpj7m65kuh/720p24/partial_movie_files/SimpleScene/3864119211_708842711_223132457.mp4'
+file 'file:/Users/bhargavap/Downloads/untitled folder 3/manim_video_generation-main/debug_clips/videos/tmpj7m65kuh/720p24/partial_movie_files/SimpleScene/357702161_2844360058_834330568.mp4'

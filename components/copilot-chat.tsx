@@ -142,15 +142,55 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
   }, [isCollapsed, autoPrompt])
 
   const handleToolExecution = async (tool: Tool, prompt: string) => {
-    // Placeholder implementations for tools
     switch (tool.id) {
       case 'video-generation':
-        return {
-          type: 'video',
-          status: 'placeholder',
-          message: `Video generation tool activated for: "${prompt}". This is a placeholder - video generation will be implemented soon.`,
-          placeholder: true
+        try {
+          // Get paper context if available
+          let paperContext = initialContext
+          
+          const response = await fetch('/api/video/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              prompt,
+              paperId,
+              paperContext
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error(`Video generation failed: ${response.status}`)
+          }
+
+          const data = await response.json()
+          
+          const result = {
+            type: 'video',
+            status: data.video.status,
+            message: data.message,
+            video: data.video,
+            isPlaceholder: data.isPlaceholder,
+            success: data.success,
+            jobId: data.jobId
+          }
+
+          // Start polling for job status if we have a job ID
+          if (data.jobId && !data.isPlaceholder) {
+            // We'll need to implement polling in the message handling
+            result.needsPolling = true
+          }
+
+          return result
+        } catch (error) {
+          console.error('Video generation error:', error)
+          return {
+            type: 'video',
+            status: 'error',
+            message: `Failed to generate video: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            error: true
+          }
         }
+        
       case 'graph-generation':
         return {
           type: 'graph',
@@ -164,6 +204,78 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           message: 'Unknown tool selected'
         }
     }
+  }
+
+  const pollJobStatus = async (jobId: string, messageId: string) => {
+    const maxAttempts = 30 // 5 minutes with 10 second intervals
+    let attempts = 0
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/video/generate?jobId=${jobId}`)
+        const result = await response.json()
+
+        if (result.success && result.job) {
+          const job = result.job
+          
+          // Update the message with current status
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageId
+              ? { 
+                  ...msg, 
+                  toolResult: { 
+                    ...msg.toolResult,
+                    status: job.status,
+                    message: job.status === 'completed' ? 'Video generation completed!' :
+                            job.status === 'failed' ? `Generation failed: ${job.error}` :
+                            job.status === 'processing' ? 'Generating video...' :
+                            'Video generation in progress...',
+                    video: job.status === 'completed' ? {
+                      ...msg.toolResult.video,
+                      status: 'completed',
+                      videoUrl: job.video_path ? `/api/video/download/${jobId}` : null
+                    } : msg.toolResult.video,
+                    isLoading: job.status === 'pending' || job.status === 'processing'
+                  }
+                }
+              : msg
+          ))
+
+          // Continue polling if not finished
+          if (job.status === 'pending' || job.status === 'processing') {
+            attempts++
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 10000) // Poll every 10 seconds
+            } else {
+              // Timeout
+              setMessages(prev => prev.map(msg => 
+                msg.id === messageId
+                  ? { 
+                      ...msg, 
+                      toolResult: { 
+                        ...msg.toolResult,
+                        status: 'error',
+                        message: 'Video generation timed out',
+                        isLoading: false
+                      }
+                    }
+                  : msg
+              ))
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error polling job status:', error)
+        // Continue polling on error, but don't update the message
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 10000)
+        }
+      }
+    }
+
+    // Start polling after a short delay
+    setTimeout(poll, 5000)
   }
 
   const sendMessage = async () => {
@@ -184,19 +296,56 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
     setIsLoading(true)
 
     try {
-      // If a tool is selected, execute it instead of normal chat
-      if (currentTool) {
+              // If a tool is selected, execute it instead of normal chat
+        if (currentTool) {
+          // Add a loading message for video generation
+          let loadingMessageId = ''
+          if (currentTool.id === 'video-generation') {
+            loadingMessageId = (Date.now() + 1).toString()
+            const loadingMessage: Message = {
+              id: loadingMessageId,
+              content: `🎬 Generating video for: "${currentInput}"`,
+              isUser: false,
+              timestamp: new Date(),
+              toolResult: {
+                type: 'video',
+                status: 'processing',
+                message: 'Generating your educational video... This may take a moment.',
+                isLoading: true
+              }
+            }
+            setMessages(prev => [...prev, loadingMessage])
+          }
+        
         const toolResult = await handleToolExecution(currentTool, currentInput)
         
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          content: toolResult.message,
-          isUser: false,
-          timestamp: new Date(),
-          toolResult: toolResult
-        }
+        // Update the loading message with the result for video generation
+        if (currentTool.id === 'video-generation') {
+          setMessages(prev => prev.map(msg => 
+            msg.toolResult?.isLoading ? {
+              ...msg,
+              content: `Used ${currentTool.name}: ${currentInput}`,
+              toolResult: toolResult
+            } : msg
+          ))
 
-        setMessages(prev => [...prev, aiResponse])
+          // Start polling if we have a job ID and need polling
+          if (toolResult.jobId && toolResult.needsPolling) {
+            pollJobStatus(toolResult.jobId, loadingMessageId)
+          }
+        } else {
+          // For other tools, add a new message
+          const aiResponse: Message = {
+            id: (Date.now() + 1).toString(),
+            content: toolResult.message,
+            isUser: false,
+            timestamp: new Date(),
+            toolResult: toolResult
+          }
+          
+          setMessages(prev => [...prev, aiResponse])
+        }
+        
         setSelectedTool(null) // Reset tool selection after use
       } else {
         // Normal chat flow
@@ -300,15 +449,133 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           <span className="text-sm font-medium text-gray-700">
             {toolResult.type === 'video' ? 'Video Generation' : 'Graph Generation'}
           </span>
-          {toolResult.placeholder && (
+          {toolResult.status && (
+            <Badge 
+              variant={toolResult.status === 'completed' ? 'default' : 
+                     toolResult.status === 'error' ? 'destructive' : 
+                     toolResult.status === 'processing' ? 'secondary' : 'outline'} 
+              className="text-xs"
+            >
+              {toolResult.status === 'processing' ? (
+                <div className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Processing
+                </div>
+              ) : toolResult.status}
+            </Badge>
+          )}
+          {toolResult.isPlaceholder && (
             <Badge variant="outline" className="text-xs">
               Placeholder
             </Badge>
           )}
         </div>
-        {toolResult.placeholder && (
+        
+        {toolResult.message && (
+          <div className="text-sm text-gray-600 mb-2">
+            {toolResult.message}
+          </div>
+        )}
+        
+        {toolResult.type === 'video' && toolResult.video && (
+          <div className="space-y-3">
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div className="text-sm font-medium text-blue-900 mb-1">
+                {toolResult.video.title}
+              </div>
+              <div className="text-xs text-blue-700">
+                {toolResult.video.description}
+              </div>
+            </div>
+            
+            {toolResult.video.metadata && (
+              <div className="bg-gray-50 p-2 rounded text-xs text-gray-600 space-y-1">
+                <div className="flex justify-between">
+                  <span>Paper Context:</span>
+                  <span className="font-medium">
+                    {toolResult.video.metadata.hasContext ? 
+                      `${toolResult.video.metadata.contextLength} chars` : 'None'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Duration:</span>
+                  <span className="font-medium">{toolResult.video.duration}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Created:</span>
+                  <span className="font-medium">{new Date(toolResult.video.createdAt).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            
+            {toolResult.isPlaceholder && (
+              <div className="text-sm text-orange-700 bg-gradient-to-r from-orange-50 to-yellow-50 p-3 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-orange-500" />
+                  <span className="font-medium">Ready for Video Generation!</span>
+                </div>
+                <div className="text-xs text-orange-600">
+                  The video generation system is successfully integrated. When the manim backend is connected, 
+                  this will generate an actual educational video based on your prompt and paper context.
+                </div>
+              </div>
+            )}
+            
+            {!toolResult.isPlaceholder && toolResult.video.videoUrl && (
+              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                <div className="text-sm font-medium text-green-800 mb-2">Video Ready!</div>
+                <video 
+                  controls 
+                  className="w-full rounded border"
+                  poster={toolResult.video.thumbnailUrl}
+                  preload="metadata"
+                  onError={(e) => {
+                    console.error('Video load error:', e);
+                    // Show error message to user
+                    const target = e.target as HTMLVideoElement;
+                    target.style.display = 'none';
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'text-sm text-red-600 bg-red-50 p-2 rounded border-l-4 border-red-400';
+                    errorDiv.textContent = 'Failed to load video. The video may still be processing or there was an error.';
+                    target.parentNode?.insertBefore(errorDiv, target);
+                  }}
+                >
+                  <source src={toolResult.video.videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => window.open(toolResult.video.videoUrl, '_blank')}
+                    className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                  >
+                    Download Video
+                  </button>
+                  <button
+                    onClick={() => {
+                      const video = document.querySelector('video') as HTMLVideoElement;
+                      if (video) {
+                        video.load(); // Reload the video
+                      }
+                    }}
+                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                  >
+                    Reload
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {toolResult.type === 'graph' && toolResult.placeholder && (
           <div className="text-sm text-gray-600 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
             This is a placeholder implementation. The actual tool will be implemented soon.
+          </div>
+        )}
+        
+        {toolResult.error && (
+          <div className="text-sm text-red-600 bg-red-50 p-2 rounded border-l-4 border-red-400">
+            ❌ {toolResult.message}
           </div>
         )}
       </div>
