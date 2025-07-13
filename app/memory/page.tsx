@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
-import { BookOpen, Brain, ArrowLeft, Loader2, RefreshCw } from "lucide-react"
-import { useRouter } from 'next/navigation'
+import { BookOpen, Brain, Loader2, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import SemanticGraph, { type GraphData, type GraphNode } from "@/components/semantic-graph"
 import SimilarityMatrix from "@/components/similarity-matrix"
@@ -37,7 +36,6 @@ interface GraphEdge {
 }
 
 export default function MemoryPage() {
-  const router = useRouter()
   const { toast } = useToast()
   const { sessionGraphId } = useMemoryGraphSession()
   const [graphs, setGraphs] = useState<MemoryGraph[]>([])
@@ -431,26 +429,6 @@ export default function MemoryPage() {
             <NextLink href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</NextLink>
             <NextLink href="/memory" className="font-sans font-bold text-royal-700 underline underline-offset-4">Memory</NextLink>
           </nav>
-          <div className="flex items-center gap-4 ml-auto">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1 text-royal-500 hover:bg-royal-100"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-1 text-royal-500 hover:bg-royal-100"
-              onClick={() => router.back()}
-            >
-              <ArrowLeft className="h-4 w-4" /> Back
-            </Button>
-          </div>
         </div>
       </header>
 

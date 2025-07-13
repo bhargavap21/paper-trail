@@ -20,6 +20,7 @@ interface PDFViewerProps {
 
 export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null)
+  const [currentPage, setCurrentPage] = useState<number>(1)
   const [scale, setScale] = useState(2.0)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [isValidPdf, setIsValidPdf] = useState<boolean>(true)
@@ -28,6 +29,7 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
   useEffect(() => {
     setPdfError(null)
     setIsValidPdf(true)
+    setCurrentPage(1) // Reset to page 1 when switching papers
     // Don't reset numPages to avoid unnecessary loading states
   }, [url])
 
@@ -53,6 +55,10 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
       const newScale = prevScale + delta
       return newScale >= 0.5 && newScale <= 3.0 ? newScale : prevScale
     })
+  }
+
+  function handleCurrentPageChange(pageNumber: number) {
+    setCurrentPage(pageNumber)
   }
 
   // Check if it's a text file based on URL
@@ -97,6 +103,7 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
               showAllPages={true}
               paperId={paperId}
               onAddToCopilotChat={onAddToCopilotChat}
+              onCurrentPageChange={handleCurrentPageChange}
             />
           )}
         </div>
@@ -131,9 +138,10 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
           
           <div className="border-l border-gray-300 pl-3 ml-2">
             <span className="text-xs text-gray-500">
-              Page 1 of {numPages}
+              Page {currentPage} of {numPages}
             </span>
           </div>
+
         </div>
       )}
     </div>

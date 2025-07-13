@@ -25,6 +25,7 @@ interface PDFComponentsProps {
   showAllPages?: boolean
   paperId?: string
   onAddToCopilotChat?: (text: string) => void
+  onCurrentPageChange?: (pageNumber: number) => void
 }
 
 interface Highlight {
@@ -222,7 +223,7 @@ const NoteBubble = ({
   );
 };
 
-export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNumber = 1, scale, showAllPages = false, paperId = '', onAddToCopilotChat }: PDFComponentsProps) {
+export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNumber = 1, scale, showAllPages = false, paperId = '', onAddToCopilotChat, onCurrentPageChange }: PDFComponentsProps) {
   // Basic state
   const [error, setError] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string>(file);
@@ -294,6 +295,11 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
       
       if (newVisiblePages.length > 0) {
         setVisiblePages(newVisiblePages);
+        // Call the callback with the first visible page (or minimum page number)
+        if (onCurrentPageChange) {
+          const currentPage = Math.min(...newVisiblePages);
+          onCurrentPageChange(currentPage);
+        }
       }
     }, {
       root: null,
@@ -992,14 +998,7 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
             }
         </div>
 
-        {/* Display current page indicator when scrolling */}
-        {showAllPages && visiblePages.length > 0 && (
-          <div className="fixed bottom-4 right-4 bg-slate-800 text-white px-3 py-2 rounded-full shadow-lg opacity-80 pointer-events-auto">
-            <p className="text-sm font-medium">
-              Page {Math.min(...visiblePages)} of {numPages}
-            </p>
-          </div>
-        )}
+
       </div>
 
 

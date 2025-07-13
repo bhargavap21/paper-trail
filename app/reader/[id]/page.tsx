@@ -19,7 +19,6 @@ import {
   Share,
   Sparkles,
   MessageCircle,
-  Video,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useReaderStore, PaperType } from "@/lib/reader-store"
@@ -214,14 +213,15 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     };
 
     // Only fetch if we have a paper ID from URL and it's not already loaded
-    if (paperIdFromUrl && !openPapers.some(p => p.id === paperIdFromUrl)) {
+    // Don't auto-load if activePaperId is explicitly empty (user closed all tabs)
+    if (paperIdFromUrl && !openPapers.some(p => p.id === paperIdFromUrl) && hasHydrated && activePaperId !== '') {
       fetchInitialPaper(paperIdFromUrl);
-    } else if (paperIdFromUrl && openPapers.some(p => p.id === paperIdFromUrl)) {
-      // Paper is already loaded, just switch to it
+    } else if (paperIdFromUrl && openPapers.some(p => p.id === paperIdFromUrl) && openPapers.length > 0) {
+      // Paper is already loaded, just switch to it (but only if there are open papers)
       setActivePaperId(paperIdFromUrl);
     }
     
-      }, [paperIdFromUrl, openPapers, addPaper, setActivePaperId, toast]);
+      }, [paperIdFromUrl, openPapers, addPaper, setActivePaperId, toast, activePaperId, hasHydrated]);
 
   const handleTabChange = (id: string) => {
     // Just switch tabs without navigation - instant switching!
@@ -322,14 +322,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     clearAllPapers();
   };
 
-  const handleGenerateSummaryVideo = () => {
-    // Placeholder for video generation logic
-    // This would integrate with external API to generate video from PDF
-    toast({
-      title: "Video Generation Started",
-      description: `Generating summary video for "${currentPaper?.title || 'this paper'}". This may take a few minutes.`,
-    });
-  };
+
 
 
 
@@ -704,26 +697,6 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                   paperId={activePaperId}
                   onAddToCopilotChat={handleAddToCopilotChat}
                 />
-                {/* Generate Summary Video Button - Floating Action Button */}
-                <div className="absolute bottom-6 right-6 z-20">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={handleGenerateSummaryVideo}
-                          className="bg-royal-500 hover:bg-royal-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full h-14 w-14 p-0 group"
-                          size="sm"
-                        >
-                          <Video className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="bg-white border border-gray-200 text-gray-900 shadow-lg">
-                        <p className="font-medium">Generate Summary Video</p>
-                        <p className="text-sm text-gray-600">Create an AI-generated video summary of this paper</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
               </div>
             )}
             {/* Abstract and Sections - Centered (only if no PDF) */}
@@ -753,26 +726,6 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </div>
                   )}
                 </main>
-                {/* Generate Summary Video Button - Floating Action Button */}
-                <div className="absolute bottom-6 right-6 z-20">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          onClick={handleGenerateSummaryVideo}
-                          className="bg-royal-500 hover:bg-royal-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full h-14 w-14 p-0 group"
-                          size="sm"
-                        >
-                          <Video className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="bg-white border border-gray-200 text-gray-900 shadow-lg">
-                        <p className="font-medium">Generate Summary Video</p>
-                        <p className="text-sm text-gray-600">Create an AI-generated video summary of this paper</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
               </div>
             )}
           </div>
