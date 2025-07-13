@@ -10,8 +10,7 @@ import { UploadPapersSidebar } from "@/components/upload-papers-sidebar"
 
 // Dynamically import CopilotChat
 const CopilotChat = dynamic(() => import('@/components/copilot-chat'), {
-  ssr: false,
-  loading: () => <div></div> // No loading spinner
+  ssr: false
 })
 
 export default function ReaderPage() {

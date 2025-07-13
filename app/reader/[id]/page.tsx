@@ -129,7 +129,6 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   
   const [activePaperId, setActivePaperId] = useState(paperIdFromUrl || "")
   const [openPapers, setOpenPapers] = useState<Array<{ id: string; title: string; paper: PaperType }>>([])
-  const [initialLoading, setInitialLoading] = useState(true);
   const [copilotChatOpen, setCopilotChatOpen] = useState(true)
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
   const [forceExpandCopilot, setForceExpandCopilot] = useState(false)
@@ -144,19 +143,16 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchInitialPaper = async (idToFetch: string) => {
       if (!idToFetch) {
-         setInitialLoading(false);
          return;
       }
       
       // Check if paper is already loaded
       if (openPapers.some(p => p.id === idToFetch)) {
         setActivePaperId(idToFetch);
-        setInitialLoading(false);
         return;
       }
       
       try {
-        setInitialLoading(true);
         const response = await fetch(`/api/papers/${idToFetch}`);
         if (!response.ok) {
           throw new Error('Failed to fetch paper');
@@ -199,8 +195,6 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           });
           setActivePaperId(idToFetch);
         }
-      } finally {
-        setInitialLoading(false);
       }
     };
 
@@ -319,20 +313,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
 
 
-  // Show loading state only for initial load
-  if (initialLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-medium text-gray-600">Loading paper...</h2>
-        </div>
-      </div>
-    )
-  }
-
   // Show not found state only when there's a paper ID in URL but it failed to load AND we're not in a tab-closed state
-  if (!initialLoading && paperIdFromUrl && !currentPaper && openPapers.length === 0 && activePaperId !== '') {
+  if (!currentPaper && openPapers.length === 0 && activePaperId !== '') {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">

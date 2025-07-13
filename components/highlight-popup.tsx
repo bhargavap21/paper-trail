@@ -122,6 +122,14 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        // Don't close if clicking on a dropdown/select content
+        const target = event.target as Element;
+        if (target.closest('[data-radix-popper-content-wrapper]') || 
+            target.closest('[role="listbox"]') ||
+            target.closest('[data-state="open"]') ||
+            target.closest('.select-content')) {
+          return;
+        }
         onClose();
       }
     }
@@ -484,19 +492,21 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
           <label className="text-sm font-medium text-slate-700 mb-2 block">
             Select Memory Graph:
           </label>
-          <Select value={selectedGraphId} onValueChange={setSelectedGraphId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose a memory graph..." />
-            </SelectTrigger>
-            <SelectContent>
-              {memoryGraphs.map((graph) => (
-                <SelectItem key={graph.id} value={graph.id}>
-                  {graph.name}
-                  {graph.isDefault && <span className="text-xs text-gray-500 ml-1">(Default)</span>}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Select value={selectedGraphId} onValueChange={setSelectedGraphId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a memory graph..." />
+              </SelectTrigger>
+              <SelectContent>
+                {memoryGraphs.map((graph) => (
+                  <SelectItem key={graph.id} value={graph.id}>
+                    {graph.name}
+                    {graph.isDefault && <span className="text-xs text-gray-500 ml-1">(Default)</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
 
