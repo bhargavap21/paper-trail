@@ -625,6 +625,8 @@ export default function MemoryPage() {
             forceExpand={forceExpandCopilot}
             selectedConnection={selectedConnection}
             onConnectionExplained={() => setSelectedConnection(null)}
+            graphData={graphData}
+            activeGraphId={activeGraphId}
           />
         </div>
       </div>

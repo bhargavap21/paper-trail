@@ -36,9 +36,14 @@ interface MemoryCopilotProps {
     targetNode: GraphNode | null
   } | null
   onConnectionExplained?: () => void
+  graphData?: {
+    nodes: GraphNode[]
+    edges: any[]
+  }
+  activeGraphId?: string
 }
 
-export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand, selectedConnection, onConnectionExplained }: MemoryCopilotProps) {
+export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand, selectedConnection, onConnectionExplained, graphData, activeGraphId }: MemoryCopilotProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -106,13 +111,25 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
     setIsLoading(true)
 
     try {
+      // Check if this is a graph insights request
+      const isGraphInsightsRequest = currentInput.includes("Give me insights based on the node connections in the graph and similarity matrix")
+      
+      let requestBody: any = { prompt: currentInput }
+      
+      // If it's a graph insights request, include the graph context
+      if (isGraphInsightsRequest && graphData && activeGraphId) {
+        requestBody.graphContext = {
+          nodes: graphData.nodes,
+          edges: graphData.edges,
+          graphId: activeGraphId
+        }
+      }
+      
       // Use the same Gemini API as the reader view but without paperId
       const response = await fetch('/api/gemini/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: currentInput
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
@@ -307,38 +324,36 @@ Idea 2: ${selectedConnection.targetNode.text}`
           </ScrollArea>
 
           {/* Quick Actions */}
-          {messages.length <= 1 && (
-            <div className="p-3 pl-4 border-t border-gray-200 bg-gray-50">
-              <div className="text-xs font-medium text-gray-600 mb-2">Quick Actions:</div>
-              <div className="flex flex-wrap gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs border-royal-200 hover:bg-royal-50 hover:text-royal-700"
-                  onClick={() => setInputValue("Explain the connections in my memory graph")}
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Connections
-                </Button>
+          <div className="p-3 pl-4 border-t border-gray-200 bg-gray-50">
+            <div className="text-xs font-medium text-gray-600 mb-2">Quick Actions:</div>
+            <div className="flex flex-wrap gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-royal-200 hover:bg-royal-50 hover:text-royal-700"
+                onClick={() => setInputValue("Give me insights based on the node connections in the graph and similarity matrix")}
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                Graph Insights
+              </Button>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-7 text-xs border-royal-200",
-                    selectedConnection?.sourceNode && selectedConnection?.targetNode
-                      ? "hover:bg-royal-50 hover:text-royal-700 text-royal-600 border-royal-400"
-                      : "text-gray-400 border-gray-200 cursor-not-allowed"
-                  )}
-                  onClick={handleExplainConnection}
-                  disabled={!selectedConnection?.sourceNode || !selectedConnection?.targetNode}
-                >
-                  <Brain className="h-3 w-3 mr-1" />
-                  Explain Connection Between Nodes
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-7 text-xs border-royal-200",
+                  selectedConnection?.sourceNode && selectedConnection?.targetNode
+                    ? "hover:bg-royal-50 hover:text-royal-700 text-royal-600 border-royal-400"
+                    : "text-gray-400 border-gray-200 cursor-not-allowed"
+                )}
+                onClick={handleExplainConnection}
+                disabled={!selectedConnection?.sourceNode || !selectedConnection?.targetNode}
+              >
+                <Brain className="h-3 w-3 mr-1" />
+                Explain Connection Between Nodes
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Input */}
           <div className="p-3 pl-4 border-t border-gray-200 bg-white sticky bottom-0 z-10 mt-0">

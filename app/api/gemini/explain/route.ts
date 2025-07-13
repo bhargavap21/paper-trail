@@ -12,7 +12,7 @@ import path from 'path';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { prompt, paperId } = body;
+    const { prompt, paperId, graphContext } = body;
     
     if (!prompt) {
       return NextResponse.json(
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     
     console.log('Gemini Explain API - Prompt received:', prompt);
     console.log('Paper ID:', paperId);
+    console.log('Graph Context:', graphContext ? 'Provided' : 'Not provided');
     
     // Get PDF file path if paperId is provided
     let pdfFilePath = null;
@@ -89,14 +90,47 @@ Please provide a clear, detailed explanation that refers to the specific content
             }
           ]);
           
-        } catch (pdfError) {
-          console.log("PDF processing failed, falling back to text-only:", pdfError.message);
+        } catch (pdfError: unknown) {
+          const errorMessage = pdfError instanceof Error ? pdfError.message : 'Unknown error';
+          console.log("PDF processing failed, falling back to text-only:", errorMessage);
           throw pdfError; // Let the outer catch handle this
         }
       } else {
-        const textOnlyPrompt = `You are a research assistant. Please answer the following question: ${prompt}
+        let textOnlyPrompt = `You are a research assistant. Please answer the following question: ${prompt}`;
+        
+        // Add graph context if provided
+        if (graphContext) {
+          const { nodes, edges } = graphContext;
+          
+          // Format nodes and edges for context
+          const nodesSummary = nodes.map((node: any) => `- "${node.text}" (from ${node.paperTitle || 'Unknown Paper'})`).join('\n');
+          const edgesSummary = edges.map((edge: any) => `- Connection between nodes ${edge.source} and ${edge.target} (similarity: ${(edge.weight * 100).toFixed(1)}%)`).join('\n');
+          
+          textOnlyPrompt = `You are a research assistant analyzing a knowledge graph. Here is the current graph data:
+
+NODES (${nodes.length} total):
+${nodesSummary}
+
+CONNECTIONS (${edges.length} total):
+${edgesSummary}
+
+SIMILARITY CALCULATION METHOD:
+The similarity scores between nodes are calculated using cosine similarity on AI embeddings of the text content. Cosine similarity ranges from 0 to 1, where:
+- 1.0 = Identical semantic meaning
+- 0.8-0.9 = Very high semantic similarity
+- 0.6-0.8 = High semantic similarity  
+- 0.4-0.6 = Moderate semantic similarity
+- 0.2-0.4 = Low semantic similarity
+- 0.0-0.2 = Very low semantic similarity
+
+Based on this graph data and the cosine similarity methodology, please answer the following question: ${prompt}
+
+Provide insights about the connections, patterns, clusters, and relationships you observe in this knowledge graph. You can now interpret the similarity scores precisely using the cosine similarity scale provided above.`;
+        } else {
+          textOnlyPrompt += `
 
 Note: No specific paper file is available for analysis. Please provide a general response based on your knowledge.`;
+        }
 
         result = await model.generateContent(textOnlyPrompt);
       }
