@@ -201,8 +201,9 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
 
   return (
     <div className={cn(
-      "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out",
-      isCollapsed ? "w-12" : "w-80"
+      isCollapsed
+        ? "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out w-12"
+        : "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out w-80"
     )}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 pl-4 border-b border-gray-200 bg-white">
@@ -232,16 +233,9 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           )}
         </div>
         {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="bg-royal-500 p-1 rounded">
-              <Brain className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-sans font-bold text-royal-700">Research Assistant</span>
-            {messages.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {messages.length}
-              </Badge>
-            )}
+          <div className="flex items-center gap-2 pl-2">
+            <span className="font-sans font-bold text-base text-royal-700">Research Copilot</span>
+            <Bot className="h-5 w-5 text-royal-600" />
           </div>
         )}
       </div>
@@ -250,14 +244,14 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
         <>
           {/* Messages */}
           <ScrollArea className="flex-1">
-            <div className="p-3 pl-4">
+            <div className={messages.length === 0 ? "flex flex-col items-center justify-center h-full w-full" : "p-3 pl-4"}>
               {messages.length === 0 ? (
-                <div className="text-center text-gray-500 text-sm py-8">
-                  <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-4 text-royal-500 mb-3">
-                    <Lightbulb className="h-6 w-6" />
+                <div className="flex flex-1 flex-col items-center justify-center w-full mt-20">
+                  <div className="inline-flex items-center justify-center rounded-full bg-gray-100 p-4 mb-2">
+                    <Bot className="h-8 w-8 text-gray-400" />
                   </div>
-                  <p className="font-medium text-gray-700">Ready to explore your research</p>
-                  <p className="text-xs mt-1 text-gray-500">Ask me to explain concepts, summarize findings, or analyze content!</p>
+                  <p className="text-gray-500 text-sm mb-1">Explore Research</p>
+                  <p className="text-xs text-gray-500 text-center max-w-xs">Explain concepts and findings!</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -340,7 +334,7 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           )}
 
           {/* Input */}
-          <div className="p-3 pl-4 border-t border-gray-200 bg-white">
+          <div className="p-3 pl-4 border-t border-gray-200 bg-white sticky bottom-0 z-10 mt-0">
             <div className="flex gap-2">
               <Textarea
                 ref={textareaRef}
@@ -348,8 +342,8 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="Ask about concepts, findings, methodology..."
-                className="flex-1 min-h-[40px] max-h-[120px] resize-none text-sm border-gray-300 focus:border-royal-500 focus:ring-royal-500"
-                rows={1}
+                className="flex-1 min-h-[56px] max-h-[160px] resize-none text-sm border-gray-300 focus:border-royal-500 focus:ring-royal-500"
+                rows={2}
               />
               <Button
                 onClick={sendMessage}

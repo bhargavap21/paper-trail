@@ -402,16 +402,16 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
           {/* Right Sidebar */}
           <div className="absolute right-0 top-0 bottom-0 z-10">
-            <CopilotChat
-              isOpen={true}
-              onClose={() => {
-                setCopilotChatOpen(false);
-                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-              }}
-              paperId={activePaperId}
-              autoPrompt={copilotAutoPrompt}
+          <CopilotChat
+            isOpen={true}
+            onClose={() => {
+              setCopilotChatOpen(false);
+              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+            }}
+            paperId={activePaperId}
+            autoPrompt={copilotAutoPrompt}
               forceExpand={forceExpandCopilot}
-            />
+          />
           </div>
         </div>
       </div>
@@ -469,19 +469,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           {/* Left Sidebar */}
           <div className="absolute left-0 top-0 bottom-0 z-10">
             <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} onPaperDeleted={handlePaperDeleted} onAllPapersDeleted={handleAllPapersDeleted} />
-          </div>
+            </div>
 
           {/* Center Content - Always Centered */}
           <div className="absolute inset-0 flex justify-center overflow-hidden">
-            {/* PDF Viewer - Centered Container */}
-            {currentPaper.filePath && (
+              {/* PDF Viewer - Centered Container */}
+              {currentPaper.filePath && (
               <div className="w-full max-w-6xl overflow-hidden relative">
-                <PDFViewer 
-                  url={currentPaper.filePath} 
-                  fileName={currentPaper.originalName || currentPaper.title}
-                  paperId={activePaperId}
-                  onAddToCopilotChat={handleAddToCopilotChat}
-                />
+                  <PDFViewer 
+                    url={currentPaper.filePath} 
+                    fileName={currentPaper.originalName || currentPaper.title}
+                    paperId={activePaperId}
+                    onAddToCopilotChat={handleAddToCopilotChat}
+                  />
                 
                 {/* Generate Summary Video Button - Floating Action Button */}
                 <div className="absolute bottom-6 right-6 z-20">
@@ -503,37 +503,37 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Abstract and Sections - Centered (only if no PDF) */}
-            {!currentPaper.filePath && (
+              {/* Abstract and Sections - Centered (only if no PDF) */}
+              {!currentPaper.filePath && (
               <div className="w-full max-w-6xl overflow-auto relative">
-                <main className="py-8 px-4">
-                  {/* Abstract */}
-                  {currentPaper.abstract && (
-                    <div className="mb-8">
-                      <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
-                      <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
-                        {currentPaper.abstract}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Paper Content - only show for mock data or extracted content */}
-                  {currentPaper.sections && currentPaper.sections.length > 0 && (
-                    <div className="space-y-8">
-                      {currentPaper.sections.map((section: any, index: number) => (
-                        <div key={index} className="space-y-4">
-                          <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
-                          <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
-                            {section.content}
-                          </div>
+                  <main className="py-8 px-4">
+                    {/* Abstract */}
+                    {currentPaper.abstract && (
+                      <div className="mb-8">
+                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
+                        <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
+                          {currentPaper.abstract}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </main>
+                      </div>
+                    )}
+
+                    {/* Paper Content - only show for mock data or extracted content */}
+                    {currentPaper.sections && currentPaper.sections.length > 0 && (
+                      <div className="space-y-8">
+                        {currentPaper.sections.map((section: any, index: number) => (
+                          <div key={index} className="space-y-4">
+                            <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                            <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
+                              {section.content}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </main>
 
                 {/* Generate Summary Video Button - Floating Action Button */}
                 <div className="absolute bottom-6 right-6 z-20">
@@ -555,22 +555,22 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </div>
-            )}
+                </div>
+              )}
           </div>
 
           {/* Right Sidebar */}
           <div className="absolute right-0 top-0 bottom-0 z-10">
-            <CopilotChat
-              isOpen={true}
-              onClose={() => {
-                setCopilotChatOpen(false);
-                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-              }}
-              paperId={activePaperId}
-              autoPrompt={copilotAutoPrompt}
+          <CopilotChat
+            isOpen={true}
+            onClose={() => {
+              setCopilotChatOpen(false);
+              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+            }}
+            paperId={activePaperId}
+            autoPrompt={copilotAutoPrompt}
               forceExpand={forceExpandCopilot}
-            />
+          />
           </div>
         </div>
       </div>
