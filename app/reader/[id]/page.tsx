@@ -341,8 +341,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
-          <div className="flex h-16 items-center px-4 md:px-6 relative">
-            <Link href="/" className="flex items-center gap-2 mr-8">
+          <div className="flex h-16 items-center px-4 md:px-6">
+            <Link href="/" className="flex items-center gap-2">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -350,12 +350,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                 Eureka
               </span>
             </Link>
-            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
-              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
-              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
-            </nav>
+            
+            {/* Centered Navigation */}
+            <div className="flex-1 flex justify-center">
+              <nav className="flex gap-6">
+                <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+                <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+                <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+                <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+              </nav>
+            </div>
+            
+            {/* Right spacer to balance the logo */}
+            <div className="w-[140px]"></div>
           </div>
         </header>
 
@@ -375,7 +382,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Loading State */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md opacity-0">
               {/* Invisible placeholder to prevent layout shift */}
             </div>
@@ -405,8 +412,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
-          <div className="flex h-16 items-center px-4 md:px-6 relative">
-            <Link href="/" className="flex items-center gap-2 mr-8">
+          <div className="flex h-16 items-center px-4 md:px-6">
+            <Link href="/" className="flex items-center gap-2">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -414,12 +421,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                 Eureka
               </span>
             </Link>
-            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
-              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
-              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
-            </nav>
+            
+            {/* Centered Navigation */}
+            <div className="flex-1 flex justify-center">
+              <nav className="flex gap-6">
+                <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+                <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+                <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+                <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+              </nav>
+            </div>
+            
+            {/* Right spacer to balance the logo */}
+            <div className="w-[140px]"></div>
           </div>
         </header>
 
@@ -439,7 +453,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Always Centered */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -479,8 +493,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
-          <div className="flex h-16 items-center px-4 md:px-6 relative">
-            <Link href="/" className="flex items-center gap-2 mr-8">
+          <div className="flex h-16 items-center px-4 md:px-6">
+            <Link href="/" className="flex items-center gap-2">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -488,12 +502,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                 Eureka
               </span>
             </Link>
-            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
-              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
-              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
-            </nav>
+            
+            {/* Centered Navigation */}
+            <div className="flex-1 flex justify-center">
+              <nav className="flex gap-6">
+                <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+                <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+                <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+                <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+              </nav>
+            </div>
+            
+            {/* Right spacer to balance the logo */}
+            <div className="w-[140px]"></div>
           </div>
         </header>
 
@@ -513,7 +534,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Always Centered */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -551,8 +572,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col h-screen bg-ivory">
         {/* Header */}
         <header className="border-b shadow-sm bg-white">
-          <div className="flex h-16 items-center px-4 md:px-6 relative">
-            <Link href="/" className="flex items-center gap-2 mr-8">
+          <div className="flex h-16 items-center px-4 md:px-6">
+            <Link href="/" className="flex items-center gap-2">
               <div className="bg-royal-500 p-1.5 rounded-lg">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
@@ -560,12 +581,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                 Eureka
               </span>
             </Link>
-            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
-              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
-              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
-            </nav>
+            
+            {/* Centered Navigation */}
+            <div className="flex-1 flex justify-center">
+              <nav className="flex gap-6">
+                <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+                <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+                <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+                <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+              </nav>
+            </div>
+            
+            {/* Right spacer to balance the logo */}
+            <div className="w-[140px]"></div>
           </div>
         </header>
 
@@ -585,7 +613,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Select a tab message */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -626,8 +654,8 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     <div className="flex flex-col h-screen bg-ivory">
       {/* Header */}
       <header className="border-b shadow-sm bg-white">
-        <div className="flex h-16 items-center px-4 md:px-6 relative">
-          <Link href="/" className="flex items-center gap-2 mr-8">
+        <div className="flex h-16 items-center px-4 md:px-6">
+          <Link href="/" className="flex items-center gap-2">
             <div className="bg-royal-500 p-1.5 rounded-lg">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
@@ -635,12 +663,19 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               Eureka
             </span>
           </Link>
-          <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
-            <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
-            <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
-            <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
-            <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
-          </nav>
+          
+          {/* Centered Navigation */}
+          <div className="flex-1 flex justify-center">
+            <nav className="flex gap-6">
+              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+            </nav>
+          </div>
+          
+          {/* Right spacer to balance the logo */}
+          <div className="w-[140px]"></div>
         </div>
       </header>
 
@@ -657,20 +692,18 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           {/* Left Sidebar */}
           <div className="absolute left-0 top-0 bottom-0 z-10">
             <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} onPaperDeleted={handlePaperDeleted} onAllPapersDeleted={handleAllPapersDeleted} />
-            </div>
+          </div>
 
           {/* Center Content - Always Centered */}
-          <div className="absolute inset-0 flex justify-center overflow-hidden">
-              {/* PDF Viewer - Centered Container */}
-              {currentPaper.filePath && (
+          <div className="absolute top-0 bottom-0 left-0 right-0 flex flex-col items-center justify-center overflow-auto">
+            {currentPaper.filePath && (
               <div className="w-full max-w-6xl overflow-hidden relative">
-                  <PDFViewer 
-                    url={currentPaper.filePath} 
-                    fileName={currentPaper.originalName || currentPaper.title}
-                    paperId={activePaperId}
-                    onAddToCopilotChat={handleAddToCopilotChat}
-                  />
-                
+                <PDFViewer 
+                  url={currentPaper.filePath} 
+                  fileName={currentPaper.originalName || currentPaper.title}
+                  paperId={activePaperId}
+                  onAddToCopilotChat={handleAddToCopilotChat}
+                />
                 {/* Generate Summary Video Button - Floating Action Button */}
                 <div className="absolute bottom-6 right-6 z-20">
                   <TooltipProvider>
@@ -691,38 +724,35 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                </div>
-              )}
-
-              {/* Abstract and Sections - Centered (only if no PDF) */}
-              {!currentPaper.filePath && (
+              </div>
+            )}
+            {/* Abstract and Sections - Centered (only if no PDF) */}
+            {!currentPaper.filePath && (
               <div className="w-full max-w-6xl overflow-auto relative">
-                  <main className="py-8 px-4">
-                    {/* Abstract */}
-                    {currentPaper.abstract && (
-                      <div className="mb-8">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
-                        <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
-                          {currentPaper.abstract}
-                        </div>
+                <main className="py-8 px-4">
+                  {/* Abstract */}
+                  {currentPaper.abstract && (
+                    <div className="mb-8">
+                      <h2 className="text-xl font-semibold mb-4 text-gray-800">Abstract</h2>
+                      <div className="text-gray-700 leading-relaxed bg-white p-6 rounded-lg border shadow-sm">
+                        {currentPaper.abstract}
                       </div>
-                    )}
-
-                    {/* Paper Content - only show for mock data or extracted content */}
-                    {currentPaper.sections && currentPaper.sections.length > 0 && (
-                      <div className="space-y-8">
-                        {currentPaper.sections.map((section: any, index: number) => (
-                          <div key={index} className="space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
-                            <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
-                              {section.content}
-                            </div>
+                    </div>
+                  )}
+                  {/* Paper Content - only show for mock data or extracted content */}
+                  {currentPaper.sections && currentPaper.sections.length > 0 && (
+                    <div className="space-y-8">
+                      {currentPaper.sections.map((section: any, index: number) => (
+                        <div key={index} className="space-y-4">
+                          <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-line bg-white p-6 rounded-lg border shadow-sm">
+                            {section.content}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </main>
-
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </main>
                 {/* Generate Summary Video Button - Floating Action Button */}
                 <div className="absolute bottom-6 right-6 z-20">
                   <TooltipProvider>
@@ -743,22 +773,22 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                </div>
-              )}
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar */}
           <div className="absolute right-0 top-0 bottom-0 z-10">
-          <CopilotChat
-            isOpen={true}
-            onClose={() => {
-              setCopilotChatOpen(false);
-              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
-            }}
-            paperId={activePaperId}
-            autoPrompt={copilotAutoPrompt}
+            <CopilotChat
+              isOpen={true}
+              onClose={() => {
+                setCopilotChatOpen(false);
+                setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+              }}
+              paperId={activePaperId}
+              autoPrompt={copilotAutoPrompt}
               forceExpand={forceExpandCopilot}
-          />
+            />
           </div>
         </div>
       </div>
