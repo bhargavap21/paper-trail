@@ -475,156 +475,159 @@ export default function MemoryPage() {
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 py-6">
-        <div className="container px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center gap-2 mb-6">
-              <Brain className="h-6 w-6 text-royal-500" />
-              <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
-              {activeGraphId && (
-                <div className="bg-royal-100 px-3 py-1 rounded-full">
-                  <span className="text-sm font-medium text-royal-700">
-                    {graphs.find(g => g.id === activeGraphId)?.name || 'Unknown Graph'}
-                  </span>
+      {/* Main Content with Sidebar Layout */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Main Content */}
+        <div className="absolute top-0 bottom-0 left-0 right-80 overflow-auto scrollbar-hide">
+          <main className="py-6">
+            <div className="container px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="flex items-center gap-2 mb-6">
+                  <Brain className="h-6 w-6 text-royal-500" />
+                  <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
+                  {activeGraphId && (
+                    <div className="bg-royal-100 px-3 py-1 rounded-full">
+                      <span className="text-sm font-medium text-royal-700">
+                        {graphs.find(g => g.id === activeGraphId)?.name || 'Unknown Graph'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Graph or Empty State */}
-            {graphData.nodes.length === 0 ? (
-              <Card className="bg-white shadow-sm">
-                <CardContent className="p-12 text-center">
-                  <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Brain className="h-8 w-8 text-royal-500" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    No Memory Items Yet
-                  </h2>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Start highlighting text in papers to build your semantic knowledge graph. 
-                    Similar concepts will automatically connect based on AI embeddings.
-                  </p>
-                  <NextLink href="/reader">
-                    <Button className="bg-royal-500 hover:bg-royal-600 text-white">
-                      Upload Your First Paper
-                    </Button>
-                  </NextLink>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Graph */}
-                <div className="lg:col-span-2">
+                {/* Graph or Empty State */}
+                {graphData.nodes.length === 0 ? (
                   <Card className="bg-white shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h2 className="text-lg font-semibold text-royal-700">
-                              Knowledge Graph
-                            </h2>
-                            <p className="text-sm text-gray-600">
-                              Nodes represent clipped sentences. Connections show semantic similarity {'>'}{(similarityThreshold * 100).toFixed(0)}%.
-                            </p>
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            Last updated: {new Date().toLocaleTimeString()}
-                          </div>
-                        </div>
-                        
-                        {/* Similarity Threshold Slider */}
-                        <div className="bg-royal-50 border border-royal-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <label className="text-sm font-medium text-royal-700">
-                                Similarity Threshold
-                              </label>
-                              <p className="text-xs text-royal-600">
-                                Adjust to show more or fewer connections
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-royal-700">
-                                {(similarityThreshold * 100).toFixed(0)}%
-                              </span>
-                              {updatingThreshold && (
-                                <RefreshCw className="h-4 w-4 animate-spin text-royal-500" />
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Slider
-                            value={[similarityThreshold]}
-                            onValueChange={handleThresholdChange}
-                            min={0.1}
-                            max={0.9}
-                            step={0.05}
-                            className="w-full"
-                            disabled={updatingThreshold}
-                          />
-                          
-                          <div className="flex justify-between text-xs text-royal-600 mt-1">
-                            <span>10% (More connections)</span>
-                            <span>50% (Balanced)</span>
-                            <span>90% (Fewer connections)</span>
-                          </div>
-                        </div>
+                    <CardContent className="p-12 text-center">
+                      <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <Brain className="h-8 w-8 text-royal-500" />
                       </div>
-                      
-                      <SemanticGraph
-                        graphData={graphData}
-                        onNodeClick={handleNodeClick}
-                        onNodeDelete={handleNodeDelete}
-                        onEdgeClick={handleEdgeClick}
-                        height="700px"
-                      />
+                      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                        No Memory Items Yet
+                      </h2>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        Start highlighting text in papers to build your semantic knowledge graph. 
+                        Similar concepts will automatically connect based on AI embeddings.
+                      </p>
+                      <NextLink href="/reader">
+                        <Button className="bg-royal-500 hover:bg-royal-600 text-white">
+                          Upload Your First Paper
+                        </Button>
+                      </NextLink>
                     </CardContent>
                   </Card>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Graph */}
+                    <div className="lg:col-span-2">
+                      <Card className="bg-white shadow-sm">
+                        <CardContent className="p-6">
+                          <div className="mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h2 className="text-lg font-semibold text-royal-700">
+                                  Knowledge Graph
+                                </h2>
+                                <p className="text-sm text-gray-600">
+                                  Nodes represent clipped sentences. Connections show semantic similarity {'>'}{(similarityThreshold * 100).toFixed(0)}%.
+                                </p>
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Last updated: {new Date().toLocaleTimeString()}
+                              </div>
+                            </div>
+                            
+                            {/* Similarity Threshold Slider */}
+                            <div className="bg-royal-50 border border-royal-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <label className="text-sm font-medium text-royal-700">
+                                    Similarity Threshold
+                                  </label>
+                                  <p className="text-xs text-royal-600">
+                                    Adjust to show more or fewer connections
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg font-bold text-royal-700">
+                                    {(similarityThreshold * 100).toFixed(0)}%
+                                  </span>
+                                  {updatingThreshold && (
+                                    <RefreshCw className="h-4 w-4 animate-spin text-royal-500" />
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <Slider
+                                value={[similarityThreshold]}
+                                onValueChange={handleThresholdChange}
+                                min={0.1}
+                                max={0.9}
+                                step={0.05}
+                                className="w-full"
+                                disabled={updatingThreshold}
+                              />
+                              
+                              <div className="flex justify-between text-xs text-royal-600 mt-1">
+                                <span>10% (More connections)</span>
+                                <span>50% (Balanced)</span>
+                                <span>90% (Fewer connections)</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <SemanticGraph
+                            graphData={graphData}
+                            onNodeClick={handleNodeClick}
+                            onNodeDelete={handleNodeDelete}
+                            onEdgeClick={handleEdgeClick}
+                            height="700px"
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
 
-                {/* Similarity Matrix */}
-                <div className="lg:col-span-1">
-                  <SimilarityMatrix 
-                    refreshTrigger={refreshTrigger} 
-                    currentThreshold={similarityThreshold}
-                    graphId={activeGraphId}
-                  />
-                </div>
+                    {/* Similarity Matrix */}
+                    <div className="lg:col-span-1">
+                      <SimilarityMatrix 
+                        refreshTrigger={refreshTrigger} 
+                        currentThreshold={similarityThreshold}
+                        graphId={activeGraphId}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <Card className="mt-6 bg-royal-50 border-royal-200">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-royal-700 mb-2">How to Use Multiple Memory Graphs</h3>
+                    <ul className="text-sm text-royal-600 space-y-1">
+                      <li>• <strong>Create new graphs</strong> using the "New Graph" button in the tabs</li>
+                      <li>• <strong>Switch between graphs</strong> by clicking on the tabs</li>
+                      <li>• <strong>Rename graphs</strong> by clicking the edit icon on any tab</li>
+                      <li>• <strong>Delete graphs</strong> by clicking the X icon (default graph cannot be deleted)</li>
+                      <li>• <strong>Clip to specific graphs</strong> when highlighting text in papers</li>
+                      <li>• <strong>Each graph is independent</strong> - connections only form within the same graph</li>
+                    </ul>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-
-            {/* Instructions */}
-            <Card className="mt-6 bg-royal-50 border-royal-200">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-royal-700 mb-2">How to Use Multiple Memory Graphs</h3>
-                <ul className="text-sm text-royal-600 space-y-1">
-                  <li>• <strong>Create new graphs</strong> using the "New Graph" button in the tabs</li>
-                  <li>• <strong>Switch between graphs</strong> by clicking on the tabs</li>
-                  <li>• <strong>Rename graphs</strong> by clicking the edit icon on any tab</li>
-                  <li>• <strong>Delete graphs</strong> by clicking the X icon (default graph cannot be deleted)</li>
-                  <li>• <strong>Clip to specific graphs</strong> when highlighting text in papers</li>
-                  <li>• <strong>Each graph is independent</strong> - connections only form within the same graph</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </main>
-
-
-
-            {/* Fixed Right Sidebar - Memory Copilot */}
-            <div className="fixed right-0 z-50" style={{ top: graphs.length > 0 ? '104px' : '64px', bottom: '0px' }}>
-              <MemoryCopilot
-                isOpen={copilotOpen}
-                onClose={() => setCopilotOpen(false)}
-                autoPrompt={copilotAutoPrompt}
-                forceExpand={forceExpandCopilot}
-                selectedConnection={selectedConnection}
-                onConnectionExplained={() => setSelectedConnection(null)}
-              />
             </div>
+          </main>
+        </div>
+
+        {/* Right Sidebar - Memory Copilot */}
+        <div className="absolute right-0 top-0 bottom-0 z-10">
+          <MemoryCopilot
+            isOpen={copilotOpen}
+            onClose={() => setCopilotOpen(false)}
+            autoPrompt={copilotAutoPrompt}
+            forceExpand={forceExpandCopilot}
+            selectedConnection={selectedConnection}
+            onConnectionExplained={() => setSelectedConnection(null)}
+          />
+        </div>
+      </div>
     </div>
   )
 }
