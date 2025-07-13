@@ -72,11 +72,16 @@ export default function MemoryPage() {
     position: { x: 0, y: 0 }
   })
 
+  // Handle closing the edge popup
+  const handleCloseEdgePopup = useCallback(() => {
+    setEdgePopup(prev => ({ ...prev, visible: false }))
+  }, [])
+
   // Close popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (edgePopup.visible) {
-        setEdgePopup(prev => ({ ...prev, visible: false }))
+        handleCloseEdgePopup()
       }
     }
 
@@ -84,7 +89,7 @@ export default function MemoryPage() {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
     }
-  }, [edgePopup.visible])
+  }, [edgePopup.visible, handleCloseEdgePopup])
 
   // Fetch memory graphs
   const fetchGraphs = useCallback(async () => {
@@ -158,6 +163,8 @@ export default function MemoryPage() {
       const edges = Array.isArray(data.edges) ? data.edges : []
       
       console.log(`Validated data: ${nodes.length} nodes, ${edges.length} edges`)
+      console.log('Node data sample:', nodes.slice(0, 2))
+      console.log('Edge data sample:', edges.slice(0, 2))
       
       // If we have a custom threshold, recalculate edges
       if (customThreshold !== undefined && nodes.length > 1) {
@@ -172,6 +179,7 @@ export default function MemoryPage() {
           if (recalcResponse.ok) {
             const recalcData = await recalcResponse.json()
             if (recalcData.graphData) {
+              console.log('Recalculated graph data:', recalcData.graphData)
               setGraphData(recalcData.graphData)
               setRefreshTrigger(prev => prev + 1)
               return
@@ -183,6 +191,7 @@ export default function MemoryPage() {
         }
       }
       
+      console.log('Setting graph data with nodes:', nodes.length, 'edges:', edges.length)
       setGraphData({ nodes, edges })
       setRefreshTrigger(prev => prev + 1) // Trigger similarity matrix refresh
     } catch (error) {
@@ -217,23 +226,14 @@ export default function MemoryPage() {
 
   // Handle threshold change
   const handleThresholdChange = async (newThreshold: number[]) => {
-    const threshold = newThreshold[0]
-    setSimilarityThreshold(threshold)
     setUpdatingThreshold(true)
+    setSimilarityThreshold(newThreshold[0])
     
-    console.log(`Threshold changed to: ${threshold} (${(threshold * 100).toFixed(0)}%)`)
+    if (activeGraphId) {
+      await fetchGraphData(activeGraphId, newThreshold[0])
+    }
     
-    // Debounce the API call to avoid too many requests
-    setTimeout(async () => {
-      if (activeGraphId) {
-        await fetchGraphData(activeGraphId, threshold)
-      }
-      setUpdatingThreshold(false)
-      toast({
-        title: "Threshold Updated",
-        description: `Similarity threshold set to ${(threshold * 100).toFixed(0)}%`
-      })
-    }, 300)
+    setUpdatingThreshold(false)
   }
 
   // Handle manual refresh
@@ -360,7 +360,7 @@ export default function MemoryPage() {
   }
 
   // Handle node deletion
-  const handleNodeDelete = async (nodeId: string) => {
+  const handleNodeDelete = useCallback(async (nodeId: string) => {
     try {
       console.log(`Deleting node: ${nodeId}`)
       
@@ -397,16 +397,16 @@ export default function MemoryPage() {
         variant: "destructive"
       })
     }
-  }
+  }, [toast])
 
   // Handle node click (navigate to paper)
-  const handleNodeClick = (node: GraphNode) => {
+  const handleNodeClick = useCallback((node: GraphNode) => {
     console.log('Node clicked:', node)
     // You could implement additional actions here like showing more details
-  }
+  }, [])
 
   // Handle edge clicks for connection explanation - show popup first
-  const handleEdgeClick = (edge: SemanticGraphEdge, sourceNode: GraphNode, targetNode: GraphNode, position?: { x: number; y: number }) => {
+  const handleEdgeClick = useCallback((edge: SemanticGraphEdge, sourceNode: GraphNode, targetNode: GraphNode, position?: { x: number; y: number }) => {
     console.log('Edge clicked:', edge, sourceNode, targetNode)
     
     // Calculate position relative to the viewport
@@ -423,20 +423,20 @@ export default function MemoryPage() {
       targetNode,
       position: adjustedPosition
     })
-  }
+  }, [])
 
   // Handle the actual explanation request when button is clicked
-  const handleExplainConnection = () => {
+  const handleExplainConnection = useCallback(() => {
     if (!edgePopup.sourceNode || !edgePopup.targetNode) return
     
-    // Generate auto-prompt for explaining the connection
-    const prompt = `Explain the connection between these two concepts:
+    // Generate auto-prompt for explaining the connection with actual node text
+    const prompt = `Explain how these two ideas connect:
 
-Concept 1: "${edgePopup.sourceNode.text}"
+Idea 1: "${edgePopup.sourceNode.text}"
 
-Concept 2: "${edgePopup.targetNode.text}"
+Idea 2: "${edgePopup.targetNode.text}"
 
-Please analyze why these two concepts might be related and what insights can be drawn from their connection. Consider their semantic similarity and potential research implications.`
+Please analyze the relationship between these two concepts and explain why they might be semantically similar. Consider their meaning, context, and potential research connections.`
 
     // Set the auto-prompt and open copilot
     setCopilotAutoPrompt(prompt)
@@ -456,7 +456,7 @@ Please analyze why these two concepts might be related and what insights can be 
     setTimeout(() => {
       setForceExpandCopilot(false)
     }, 100)
-  }
+  }, [edgePopup.sourceNode, edgePopup.targetNode])
 
   // Set up real-time updates (polling every 30 seconds)
   useEffect(() => {
@@ -507,7 +507,7 @@ Please analyze why these two concepts might be related and what insights can be 
       <AFrameScript />
       
       {/* Header */}
-      <header className="border-b bg-white shadow-sm">
+      <header className="border-b bg-white shadow-sm sticky top-0 z-30">
         <div className="flex h-16 items-center px-4 md:px-6 relative">
           <NextLink href="/" className="flex items-center gap-2 mr-8">
             <div className="bg-royal-500 p-1.5 rounded-lg">
@@ -526,20 +526,22 @@ Please analyze why these two concepts might be related and what insights can be 
 
       {/* Memory Graph Tabs */}
       {graphs.length > 0 && (
-        <MemoryTabs
-          graphs={graphs}
-          activeGraphId={activeGraphId}
-          onTabChange={handleTabChange}
-          onTabClose={handleTabClose}
-          onTabCreate={handleTabCreate}
-          onTabRename={handleTabRename}
-        />
+        <div className="sticky top-16 z-20 bg-white">
+          <MemoryTabs
+            graphs={graphs}
+            activeGraphId={activeGraphId}
+            onTabChange={handleTabChange}
+            onTabClose={handleTabClose}
+            onTabCreate={handleTabCreate}
+            onTabRename={handleTabRename}
+          />
+        </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-1 py-6 overflow-hidden">
-        <div className="container px-4 h-full">
-          <div className="max-w-full mx-auto h-full flex flex-col">
+      <main className="flex-1 py-6">
+        <div className="container px-4">
+          <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <Brain className="h-6 w-6 text-royal-500" />
               <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
@@ -552,153 +554,108 @@ Please analyze why these two concepts might be related and what insights can be 
               )}
             </div>
 
-                        {/* Graph or Empty State */}
-            <div className="flex-1 min-h-0 relative">
-              {graphData.nodes.length === 0 ? (
-                <Card className="bg-white shadow-sm">
-                  <CardContent className="p-12 text-center">
-                    <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <Brain className="h-8 w-8 text-royal-500" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Memory Items Yet
-                    </h2>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      Start highlighting text in papers to build your semantic knowledge graph. 
-                      Similar concepts will automatically connect based on AI embeddings.
-                    </p>
-                    <NextLink href="/reader">
-                      <Button className="bg-royal-500 hover:bg-royal-600 text-white">
-                        Upload Your First Paper
-                      </Button>
-                    </NextLink>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                  {/* Main Graph */}
-                  <div className="lg:col-span-2">
-                    <Card className="bg-white shadow-sm h-full">
-                      <CardContent className="p-6 h-full flex flex-col">
-                        <div className="mb-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h2 className="text-lg font-semibold text-royal-700">
-                                Knowledge Graph
-                              </h2>
-                              <p className="text-sm text-gray-600">
-                                Nodes represent clipped sentences. Connections show semantic similarity {'>'}{(similarityThreshold * 100).toFixed(0)}%.
-                              </p>
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              Last updated: {new Date().toLocaleTimeString()}
-                            </div>
+            {/* Graph or Empty State */}
+            {graphData.nodes.length === 0 ? (
+              <Card className="bg-white shadow-sm">
+                <CardContent className="p-12 text-center">
+                  <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Brain className="h-8 w-8 text-royal-500" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Memory Items Yet
+                  </h2>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Start highlighting text in papers to build your semantic knowledge graph. 
+                    Similar concepts will automatically connect based on AI embeddings.
+                  </p>
+                  <NextLink href="/reader">
+                    <Button className="bg-royal-500 hover:bg-royal-600 text-white">
+                      Upload Your First Paper
+                    </Button>
+                  </NextLink>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Graph */}
+                <div className="lg:col-span-2">
+                  <Card className="bg-white shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h2 className="text-lg font-semibold text-royal-700">
+                              Knowledge Graph
+                            </h2>
+                            <p className="text-sm text-gray-600">
+                              Nodes represent clipped sentences. Connections show semantic similarity {'>'}{(similarityThreshold * 100).toFixed(0)}%.
+                            </p>
                           </div>
-                          
-                          {/* Similarity Threshold Slider */}
-                          <div className="bg-royal-50 border border-royal-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <label className="text-sm font-medium text-royal-700">
-                                  Similarity Threshold
-                                </label>
-                                <p className="text-xs text-royal-600">
-                                  Adjust to show more or fewer connections
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg font-bold text-royal-700">
-                                  {(similarityThreshold * 100).toFixed(0)}%
-                                </span>
-                                {updatingThreshold && (
-                                  <RefreshCw className="h-4 w-4 animate-spin text-royal-500" />
-                                )}
-                              </div>
-                            </div>
-                            
-                            <Slider
-                              value={[similarityThreshold]}
-                              onValueChange={handleThresholdChange}
-                              min={0.1}
-                              max={0.9}
-                              step={0.05}
-                              className="w-full"
-                              disabled={updatingThreshold}
-                            />
-                            
-                            <div className="flex justify-between text-xs text-royal-600 mt-1">
-                              <span>10% (More connections)</span>
-                              <span>50% (Balanced)</span>
-                              <span>90% (Fewer connections)</span>
-                            </div>
+                          <div className="text-sm text-gray-600">
+                            Last updated: {new Date().toLocaleTimeString()}
                           </div>
                         </div>
                         
-                        <div className="flex-1 min-h-0">
-                          <SemanticGraph
-                            graphData={graphData}
-                            onNodeClick={handleNodeClick}
-                            onNodeDelete={handleNodeDelete}
-                            onEdgeClick={handleEdgeClick}
-                            height="100%"
+                        {/* Similarity Threshold Slider */}
+                        <div className="bg-royal-50 border border-royal-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <label className="text-sm font-medium text-royal-700">
+                                Similarity Threshold
+                              </label>
+                              <p className="text-xs text-royal-600">
+                                Adjust to show more or fewer connections
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-royal-700">
+                                {(similarityThreshold * 100).toFixed(0)}%
+                              </span>
+                              {updatingThreshold && (
+                                <RefreshCw className="h-4 w-4 animate-spin text-royal-500" />
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Slider
+                            value={[similarityThreshold]}
+                            onValueChange={handleThresholdChange}
+                            min={0.1}
+                            max={0.9}
+                            step={0.05}
+                            className="w-full"
+                            disabled={updatingThreshold}
                           />
+                          
+                          <div className="flex justify-between text-xs text-royal-600 mt-1">
+                            <span>10% (More connections)</span>
+                            <span>50% (Balanced)</span>
+                            <span>90% (Fewer connections)</span>
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Similarity Matrix */}
-                  <div className="lg:col-span-1">
-                    <SimilarityMatrix 
-                      refreshTrigger={refreshTrigger} 
-                      currentThreshold={similarityThreshold}
-                      graphId={activeGraphId}
-                    />
-                  </div>
+                      </div>
+                      
+                      <SemanticGraph
+                        graphData={graphData}
+                        onNodeClick={handleNodeClick}
+                        onNodeDelete={handleNodeDelete}
+                        onEdgeClick={handleEdgeClick}
+                        height="700px"
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-              
-              {/* Edge Explanation Popup */}
-              {edgePopup.visible && (
-                <div 
-                  className="fixed z-40 bg-white rounded-lg shadow-lg border border-gray-200 p-3"
-                  style={{
-                    left: `${edgePopup.position.x}px`,
-                    top: `${edgePopup.position.y}px`,
-                    transform: 'translate(-50%, -50%)'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={handleExplainConnection}
-                      className="bg-royal-500 hover:bg-royal-600 text-white text-sm py-2 px-3"
-                    >
-                      <Brain className="h-4 w-4 mr-2" />
-                      Explain Connection
-                    </Button>
-                    <Button
-                      onClick={() => setEdgePopup(prev => ({ ...prev, visible: false }))}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </div>
-              )}
 
-              {/* Fixed Right Sidebar - Memory Copilot */}
-              <div className="fixed right-0 top-0 bottom-0 z-50">
-                <MemoryCopilot
-                  isOpen={copilotOpen}
-                  onClose={() => setCopilotOpen(false)}
-                  autoPrompt={copilotAutoPrompt}
-                  forceExpand={forceExpandCopilot}
-                />
+                {/* Similarity Matrix */}
+                <div className="lg:col-span-1">
+                  <SimilarityMatrix 
+                    refreshTrigger={refreshTrigger} 
+                    currentThreshold={similarityThreshold}
+                    graphId={activeGraphId}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Instructions */}
             <Card className="mt-6 bg-royal-50 border-royal-200">
@@ -717,6 +674,47 @@ Please analyze why these two concepts might be related and what insights can be 
           </div>
         </div>
       </main>
+
+            {/* Edge Explanation Popup */}
+            {edgePopup.visible && (
+              <div 
+                className="fixed z-40 bg-white rounded-lg shadow-lg border border-gray-200 p-3"
+                style={{
+                  left: `${edgePopup.position.x}px`,
+                  top: `${edgePopup.position.y}px`,
+                  transform: 'translate(-50%, -50%)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleExplainConnection}
+                    className="bg-royal-500 hover:bg-royal-600 text-white text-sm py-2 px-3"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    Explain Connection
+                  </Button>
+                  <Button
+                    onClick={handleCloseEdgePopup}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Fixed Right Sidebar - Memory Copilot */}
+            <div className="fixed right-0 z-50" style={{ top: graphs.length > 0 ? '104px' : '64px', bottom: '0px' }}>
+              <MemoryCopilot
+                isOpen={copilotOpen}
+                onClose={() => setCopilotOpen(false)}
+                autoPrompt={copilotAutoPrompt}
+                forceExpand={forceExpandCopilot}
+              />
+            </div>
     </div>
   )
 }

@@ -39,7 +39,7 @@ interface SemanticGraphProps {
   height?: string;
 }
 
-export default function SemanticGraph({ 
+const SemanticGraph = React.memo(function SemanticGraph({ 
   graphData, 
   onNodeClick, 
   onNodeDelete,
@@ -487,7 +487,7 @@ export default function SemanticGraph({
       const tooltips = document.querySelectorAll('.cytoscape-tooltip');
       tooltips.forEach(tooltip => tooltip.remove());
     };
-  }, [graphData, onNodeClick]);
+  }, [graphData]);
 
   // Handle search
   useEffect(() => {
@@ -687,4 +687,10 @@ export default function SemanticGraph({
       </div>
     </div>
   );
-} 
+}, (prevProps, nextProps) => {
+  // Only re-render if graphData actually changes
+  return JSON.stringify(prevProps.graphData) === JSON.stringify(nextProps.graphData) &&
+         prevProps.height === nextProps.height;
+});
+
+export default SemanticGraph;
