@@ -5,13 +5,14 @@ import { ObjectId } from 'mongodb';
 // POST: Create a new highlight with AI summary
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log("POST highlights - Start");
     
     const { text, position, page, context } = await request.json();
-    const paperId = params.id;
+    const resolvedParams = await params;
+    const paperId = resolvedParams.id;
     
     console.log("Request data:", { 
       paperId, 
@@ -174,11 +175,12 @@ Keep your explanation concise (3-4 sentences) but make sure the student truly un
 // GET: Retrieve all highlights for a paper
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log("GET highlights - Start");
-    const paperId = params.id;
+    const resolvedParams = await params;
+    const paperId = resolvedParams.id;
     console.log("Fetching highlights for paperId:", paperId);
     
     // Connect to the database

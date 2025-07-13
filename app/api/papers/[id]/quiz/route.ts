@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { genAI } from '@/lib/config';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const paperId = params.id;
+    const resolvedParams = await params;
+    const paperId = resolvedParams.id;
 
     console.log('=== QUIZ GENERATION API CALLED ===');
     console.log('Paper ID:', paperId);

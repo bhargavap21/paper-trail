@@ -13,7 +13,11 @@ import {
   ChevronLeft, 
   ChevronRight,
   MessageCircle,
-  Trash2
+  Trash2,
+  Lightbulb,
+  BookOpen,
+  Brain,
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -56,15 +60,21 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
   // Add initial welcome message when chat opens
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      let welcomeContent = `Hello! I'm your research assistant powered by Gemini. I'm here to help you understand and analyze your papers.`;
+      
+      if (paperId) {
+        welcomeContent = `Hello! I'm your research assistant. I have access to the current paper and can help you understand and analyze it. What would you like to explore?`;
+      }
+      
       const welcomeMessage: Message = {
         id: Date.now().toString(),
-        content: `Hello! I'm your AI assistant powered by Gemini. How can I help you today?`,
+        content: welcomeContent,
         isUser: false,
         timestamp: new Date()
-      }
-      setMessages([welcomeMessage])
+      };
+      setMessages([welcomeMessage]);
     }
-  }, [isOpen, messages.length])
+  }, [isOpen, messages.length, paperId])
 
   // Auto-expand when auto-prompt is provided or forceExpand is true
   useEffect(() => {
@@ -112,11 +122,16 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
       const response = await fetch('/api/gemini/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: inputValue }),
+        body: JSON.stringify({ 
+          prompt: inputValue,
+          paperId: paperId 
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response')
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        throw new Error(errorData.error || `API Error: ${response.status}`)
       }
 
       const data = await response.json()
@@ -130,9 +145,18 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
       setMessages(prev => [...prev, aiResponse])
     } catch (error) {
       console.error('Error sending message:', error)
+      let errorContent = 'Sorry, I encountered an error. Please try again.';
+      
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if (error.message.includes('API Error')) {
+          errorContent = `${error.message}. Please try again.`;
+        }
+      }
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: errorContent,
         isUser: false,
         timestamp: new Date()
       }
@@ -209,8 +233,15 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
         </div>
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <span className="font-sans font-bold text-royal-700">Copilot</span>
-            <Bot className="h-5 w-5 text-royal-600" />
+            <div className="bg-royal-500 p-1 rounded">
+              <Brain className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-sans font-bold text-royal-700">Research Assistant</span>
+            {messages.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {messages.length}
+              </Badge>
+            )}
           </div>
         )}
       </div>
@@ -222,9 +253,11 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
             <div className="p-3 pl-4">
               {messages.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm py-8">
-                  <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No messages yet</p>
-                  <p className="text-xs mt-1">Ask me anything about your papers!</p>
+                  <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-4 text-royal-500 mb-3">
+                    <Lightbulb className="h-6 w-6" />
+                  </div>
+                  <p className="font-medium text-gray-700">Ready to explore your research</p>
+                  <p className="text-xs mt-1 text-gray-500">Ask me to explain concepts, summarize findings, or analyze content!</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -236,7 +269,7 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                       <div
                         className={`max-w-[85%] rounded-lg px-3 py-2 ${
                           message.isUser
-                            ? 'bg-royal-500 text-white'
+                            ? 'bg-royal-500 text-white shadow-sm'
                             : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                         }`}
                       >
@@ -265,9 +298,9 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                     <div className="flex justify-start">
                       <div className="bg-white text-gray-900 border border-gray-200 shadow-sm rounded-lg px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <Bot className="h-3 w-3" />
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          <span className="text-sm">Thinking...</span>
+                          <Brain className="h-3 w-3 text-royal-500" />
+                          <Loader2 className="h-3 w-3 animate-spin text-royal-500" />
+                          <span className="text-sm">Analyzing...</span>
                         </div>
                       </div>
                     </div>
@@ -279,6 +312,33 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
             </div>
           </ScrollArea>
 
+          {/* Quick Actions */}
+          {messages.length <= 1 && (
+            <div className="p-3 pl-4 border-t border-gray-200 bg-gray-50">
+              <div className="text-xs font-medium text-gray-600 mb-2">Quick Actions:</div>
+              <div className="flex flex-wrap gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-royal-200 hover:bg-royal-50 hover:text-royal-700"
+                  onClick={() => setInputValue("Explain the key findings of this paper")}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Key Findings
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-royal-200 hover:bg-royal-50 hover:text-royal-700"
+                  onClick={() => setInputValue("Summarize the methodology used")}
+                >
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  Methodology
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Input */}
           <div className="p-3 pl-4 border-t border-gray-200 bg-white">
             <div className="flex gap-2">
@@ -286,9 +346,9 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
                 ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything..."
-                className="flex-1 min-h-[40px] max-h-[120px] resize-none text-sm border-gray-300 focus:border-royal-500"
+                onKeyDown={handleKeyPress}
+                placeholder="Ask about concepts, findings, methodology..."
+                className="flex-1 min-h-[40px] max-h-[120px] resize-none text-sm border-gray-300 focus:border-royal-500 focus:ring-royal-500"
                 rows={1}
               />
               <Button

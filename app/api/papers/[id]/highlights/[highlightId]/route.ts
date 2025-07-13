@@ -5,12 +5,13 @@ import { ObjectId } from 'mongodb';
 // DELETE: Remove a highlight by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string, highlightId: string } }
+  { params }: { params: Promise<{ id: string, highlightId: string }> }
 ) {
   try {
     console.log("DELETE highlight - Start");
-    const paperId = params.id;
-    const highlightId = params.highlightId;
+    const resolvedParams = await params;
+    const paperId = resolvedParams.id;
+    const highlightId = resolvedParams.highlightId;
     
     console.log("Deleting highlight:", { paperId, highlightId });
     

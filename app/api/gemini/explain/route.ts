@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { genAI } from '@/lib/config'; // Assuming genAI is configured here
+import { genAI, connectToDatabase, dbModels } from '@/lib/config';
+import { ObjectId } from 'mongodb';
+import fs from 'fs';
+import path from 'path';
 
 // This is a simple mock implementation. In a real application, you would:
 // 1. Use the Google Generative AI SDK or API for Gemini
@@ -9,7 +12,7 @@ import { genAI } from '@/lib/config'; // Assuming genAI is configured here
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { prompt } = body;
+    const { prompt, paperId } = body;
     
     if (!prompt) {
       return NextResponse.json(
@@ -19,6 +22,41 @@ export async function POST(req: Request) {
     }
     
     console.log('Gemini Explain API - Prompt received:', prompt);
+    console.log('Paper ID:', paperId);
+    
+    // Get PDF file path if paperId is provided
+    let pdfFilePath = null;
+    if (paperId) {
+      try {
+        const db = await connectToDatabase();
+        const papersCollection = db.collection(dbModels.papers);
+        
+        let paper = null;
+        try {
+          const objectId = new ObjectId(paperId);
+          paper = await papersCollection.findOne({ _id: objectId });
+        } catch (error) {
+          paper = await papersCollection.findOne({ id: paperId });
+        }
+        
+        if (paper && paper.filePath) {
+          // Convert relative path to absolute path
+          const fullPath = path.join(process.cwd(), 'public', paper.filePath);
+          
+          // Check if file exists
+          if (fs.existsSync(fullPath)) {
+            pdfFilePath = fullPath;
+            console.log('PDF file found for processing');
+          } else {
+            console.log('PDF file not found at:', fullPath);
+          }
+        } else {
+          console.log('No paper found or no filePath for ID:', paperId);
+        }
+      } catch (error) {
+        console.error('Error fetching paper file:', error);
+      }
+    }
     
     // --- Use Actual Gemini API ---
     let explanation = 'Failed to generate explanation.'; // Default error message
@@ -26,8 +64,42 @@ export async function POST(req: Request) {
       // Get the generative model
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-      console.log("Calling Gemini API with model: gemini-1.5-flash...");
-      const result = await model.generateContent(prompt);
+      let result;
+      
+      if (pdfFilePath) {
+        try {
+          // Read PDF as base64
+          const fileData = fs.readFileSync(pdfFilePath);
+          const base64Data = fileData.toString('base64');
+          
+          // Create prompt with file data inline
+          const promptWithFile = `You are a research assistant helping to analyze academic papers. I'm providing a PDF document for you to analyze.
+
+Based on the content of this paper, please answer the following question: ${prompt}
+
+Please provide a clear, detailed explanation that refers to the specific content, findings, and context from the paper.`;
+
+          result = await model.generateContent([
+            promptWithFile,
+            {
+              inlineData: {
+                mimeType: 'application/pdf',
+                data: base64Data
+              }
+            }
+          ]);
+          
+        } catch (pdfError) {
+          console.log("PDF processing failed, falling back to text-only:", pdfError.message);
+          throw pdfError; // Let the outer catch handle this
+        }
+      } else {
+        const textOnlyPrompt = `You are a research assistant. Please answer the following question: ${prompt}
+
+Note: No specific paper file is available for analysis. Please provide a general response based on your knowledge.`;
+
+        result = await model.generateContent(textOnlyPrompt);
+      }
       
       if (!result || !result.response) {
         throw new Error("No response received from Gemini API");
@@ -44,19 +116,43 @@ export async function POST(req: Request) {
 
     } catch (apiError: unknown) {
       console.error('Error calling Gemini API:', apiError);
+      console.error('Error details:', JSON.stringify(apiError, null, 2));
       
       // Type assertion or check
       let errorMessage = "An unknown error occurred";
       if (apiError instanceof Error) {
         errorMessage = apiError.message;
+        console.error('Error stack:', apiError.stack);
       }
 
-      explanation = `Sorry, an error occurred while generating the explanation: ${errorMessage}`;
-      // Return a 500 status specifically for API errors
-       return NextResponse.json(
-        { error: explanation },
-        { status: 500 } 
-      );
+      // Check if it's a file upload error
+      if (errorMessage.includes('uploadFile') || errorMessage.includes('file')) {
+        console.log('File upload error detected, trying fallback without PDF');
+        try {
+          const fallbackPrompt = `You are a research assistant. Please answer the following question: ${prompt}
+
+Note: Unable to access the specific paper file, but please provide a helpful response based on your knowledge.`;
+
+          const fallbackResult = await model.generateContent(fallbackPrompt);
+          if (fallbackResult && fallbackResult.response) {
+            explanation = fallbackResult.response.text();
+            console.log("Fallback response successful");
+          } else {
+            throw new Error("Fallback also failed");
+          }
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+          return NextResponse.json(
+            { error: `Sorry, an error occurred while generating the explanation: ${errorMessage}` },
+            { status: 500 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: `Sorry, an error occurred while generating the explanation: ${errorMessage}` },
+          { status: 500 }
+        );
+      }
     }
     // --- End Gemini API Call ---
 
