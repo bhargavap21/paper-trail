@@ -17,6 +17,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { GraphNode } from '@/components/semantic-graph'
 
 interface Message {
   id: string
@@ -30,9 +31,14 @@ interface MemoryCopilotProps {
   onClose: () => void
   autoPrompt?: string
   forceExpand?: boolean
+  selectedConnection?: {
+    sourceNode: GraphNode | null
+    targetNode: GraphNode | null
+  } | null
+  onConnectionExplained?: () => void
 }
 
-export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand }: MemoryCopilotProps) {
+export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand, selectedConnection, onConnectionExplained }: MemoryCopilotProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -172,6 +178,28 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
     })
   }
 
+  const handleExplainConnection = () => {
+    if (!selectedConnection?.sourceNode || !selectedConnection?.targetNode) return
+    
+    // Generate the auto-prompt for explaining the connection
+    const prompt = `Explain how these two ideas connect to each other:
+Idea 1: ${selectedConnection.sourceNode.text}
+Idea 2: ${selectedConnection.targetNode.text}`
+    
+    // Set the input value and send the message
+    setInputValue(prompt)
+    
+    // Auto-send the message
+    setTimeout(() => {
+      sendMessage()
+    }, 100)
+    
+    // Clear the selected connection
+    if (onConnectionExplained) {
+      onConnectionExplained()
+    }
+  }
+
   return (
     <div className={cn(
       "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out",
@@ -292,14 +320,21 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
                   <Sparkles className="h-3 w-3 mr-1" />
                   Connections
                 </Button>
+
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs border-royal-200 hover:bg-royal-50 hover:text-royal-700"
-                  onClick={() => setInputValue("Summarize the key concepts in my graph")}
+                  className={cn(
+                    "h-7 text-xs border-royal-200",
+                    selectedConnection?.sourceNode && selectedConnection?.targetNode
+                      ? "hover:bg-royal-50 hover:text-royal-700 text-royal-600 border-royal-400"
+                      : "text-gray-400 border-gray-200 cursor-not-allowed"
+                  )}
+                  onClick={handleExplainConnection}
+                  disabled={!selectedConnection?.sourceNode || !selectedConnection?.targetNode}
                 >
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  Concepts
+                  <Brain className="h-3 w-3 mr-1" />
+                  Explain Connection Between Nodes
                 </Button>
               </div>
             </div>

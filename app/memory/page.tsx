@@ -57,39 +57,13 @@ export default function MemoryPage() {
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
   const [forceExpandCopilot, setForceExpandCopilot] = useState(false)
   
-  // Edge popup state
-  const [edgePopup, setEdgePopup] = useState<{
-    visible: boolean
-    edge: SemanticGraphEdge | null
+  // Selected connection state for copilot
+  const [selectedConnection, setSelectedConnection] = useState<{
     sourceNode: GraphNode | null
     targetNode: GraphNode | null
-    position: { x: number; y: number }
-  }>({
-    visible: false,
-    edge: null,
-    sourceNode: null,
-    targetNode: null,
-    position: { x: 0, y: 0 }
-  })
+  } | null>(null)
+  
 
-  // Handle closing the edge popup
-  const handleCloseEdgePopup = useCallback(() => {
-    setEdgePopup(prev => ({ ...prev, visible: false }))
-  }, [])
-
-  // Close popup when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (edgePopup.visible) {
-        handleCloseEdgePopup()
-      }
-    }
-
-    if (edgePopup.visible) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [edgePopup.visible, handleCloseEdgePopup])
 
   // Fetch memory graphs
   const fetchGraphs = useCallback(async () => {
@@ -405,58 +379,21 @@ export default function MemoryPage() {
     // You could implement additional actions here like showing more details
   }, [])
 
-  // Handle edge clicks for connection explanation - show popup first
+  // Handle edge clicks for connection explanation - store selected connection
   const handleEdgeClick = useCallback((edge: SemanticGraphEdge, sourceNode: GraphNode, targetNode: GraphNode, position?: { x: number; y: number }) => {
     console.log('Edge clicked:', edge, sourceNode, targetNode)
     
-    // Calculate position relative to the viewport
-    const adjustedPosition = position ? {
-      x: position.x + 200, // Offset for left sidebar
-      y: position.y + 200  // Offset for header and other elements
-    } : { x: 0, y: 0 }
-    
-    // Show popup on the edge
-    setEdgePopup({
-      visible: true,
-      edge,
+    // Store the selected connection for the copilot
+    setSelectedConnection({
       sourceNode,
-      targetNode,
-      position: adjustedPosition
+      targetNode
     })
+    
+    // Ensure copilot is open
+    setCopilotOpen(true)
   }, [])
 
-  // Handle the actual explanation request when button is clicked
-  const handleExplainConnection = useCallback(() => {
-    if (!edgePopup.sourceNode || !edgePopup.targetNode) return
-    
-    // Generate auto-prompt for explaining the connection with actual node text
-    const prompt = `Explain how these two ideas connect:
 
-Idea 1: "${edgePopup.sourceNode.text}"
-
-Idea 2: "${edgePopup.targetNode.text}"
-
-Please analyze the relationship between these two concepts and explain why they might be semantically similar. Consider their meaning, context, and potential research connections.`
-
-    // Set the auto-prompt and open copilot
-    setCopilotAutoPrompt(prompt)
-    setCopilotOpen(true)
-    setForceExpandCopilot(true)
-    
-    // Hide the popup
-    setEdgePopup({
-      visible: false,
-      edge: null,
-      sourceNode: null,
-      targetNode: null,
-      position: { x: 0, y: 0 }
-    })
-    
-    // Reset force expand after a short delay
-    setTimeout(() => {
-      setForceExpandCopilot(false)
-    }, 100)
-  }, [edgePopup.sourceNode, edgePopup.targetNode])
 
   // Set up real-time updates (polling every 30 seconds)
   useEffect(() => {
@@ -675,36 +612,7 @@ Please analyze the relationship between these two concepts and explain why they 
         </div>
       </main>
 
-            {/* Edge Explanation Popup */}
-            {edgePopup.visible && (
-              <div 
-                className="fixed z-40 bg-white rounded-lg shadow-lg border border-gray-200 p-3"
-                style={{
-                  left: `${edgePopup.position.x}px`,
-                  top: `${edgePopup.position.y}px`,
-                  transform: 'translate(-50%, -50%)'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleExplainConnection}
-                    className="bg-royal-500 hover:bg-royal-600 text-white text-sm py-2 px-3"
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    Explain Connection
-                  </Button>
-                  <Button
-                    onClick={handleCloseEdgePopup}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                  >
-                    ×
-                  </Button>
-                </div>
-              </div>
-            )}
+
 
             {/* Fixed Right Sidebar - Memory Copilot */}
             <div className="fixed right-0 z-50" style={{ top: graphs.length > 0 ? '104px' : '64px', bottom: '0px' }}>
@@ -713,6 +621,8 @@ Please analyze the relationship between these two concepts and explain why they 
                 onClose={() => setCopilotOpen(false)}
                 autoPrompt={copilotAutoPrompt}
                 forceExpand={forceExpandCopilot}
+                selectedConnection={selectedConnection}
+                onConnectionExplained={() => setSelectedConnection(null)}
               />
             </div>
     </div>
