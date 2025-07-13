@@ -375,7 +375,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Loading State */}
-          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md opacity-0">
               {/* Invisible placeholder to prevent layout shift */}
             </div>
@@ -446,7 +446,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Always Centered */}
-          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
@@ -527,7 +527,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* Center Content - Always Centered */}
-          <div className="absolute top-0 bottom-0 left-12 right-80 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
                 <BookOpen className="h-12 w-12" />
