@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server';
 import { mockDb, calculateCosineSimilarity } from '../db';
 
-async function analyzeWithThreshold(customThreshold?: number) {
+async function analyzeWithThreshold(customThreshold?: number, graphId?: string) {
   console.log('=== ANALYZING ALL CURRENT SIMILARITIES ===');
   console.log(`Using threshold: ${customThreshold || 0.5} (${((customThreshold || 0.5) * 100).toFixed(1)}%)`);
+  console.log(`Graph filter: ${graphId || 'all graphs'}`);
   
   const userId = "demo-user";
-  const allItems = mockDb.listMemoryItems({ userId });
   
-  console.log(`Found ${allItems.length} memory items to analyze`);
+  // Get default graph if no graphId provided
+  let targetGraphId = graphId;
+  if (!targetGraphId) {
+    const defaultGraph = mockDb.getOrCreateDefaultGraph(userId);
+    targetGraphId = defaultGraph.id;
+  }
+  
+  const allItems = mockDb.listMemoryItems({ userId, graphId: targetGraphId });
+  
+  console.log(`Found ${allItems.length} memory items to analyze in graph ${targetGraphId}`);
   
   if (allItems.length < 2) {
     return {
@@ -80,7 +89,10 @@ async function analyzeWithThreshold(customThreshold?: number) {
 
 export async function GET(req: Request) {
   try {
-    const result = await analyzeWithThreshold();
+    const url = new URL(req.url);
+    const graphId = url.searchParams.get('graphId');
+    
+    const result = await analyzeWithThreshold(undefined, graphId || undefined);
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[MEMORY_ANALYZE_GET]', error);
@@ -91,13 +103,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { threshold } = body;
+    const { threshold, graphId } = body;
     
     if (threshold !== undefined && (threshold < 0 || threshold > 1)) {
       return new NextResponse('Threshold must be between 0 and 1', { status: 400 });
     }
     
-    const result = await analyzeWithThreshold(threshold);
+    const result = await analyzeWithThreshold(threshold, graphId);
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[MEMORY_ANALYZE_POST]', error);

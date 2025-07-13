@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
-import { XIcon, Clipboard, CheckCircle, Loader2, Lightbulb, Trash2, Share2 } from 'lucide-react'
+import { XIcon, Clipboard, CheckCircle, Loader2, Lightbulb, Trash2, Share2, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
 
 // Define Highlight interface here instead of importing it
@@ -25,6 +26,15 @@ interface Highlight {
   summary?: string;
   context?: string;
   note?: string;
+}
+
+// Memory graph interface
+interface MemoryGraph {
+  id: string;
+  name: string;
+  userId: string;
+  createdAt: string;
+  isDefault?: boolean;
 }
 
 // Helper function to format markdown-like text into HTML elements
@@ -103,6 +113,9 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
   const [isNoteMode, setIsNoteMode] = useState<boolean>(initialNoteMode);
   const [noteText, setNoteText] = useState<string>('');
   const [isSavingNote, setIsSavingNote] = useState<boolean>(false);
+  const [memoryGraphs, setMemoryGraphs] = useState<MemoryGraph[]>([]);
+  const [selectedGraphId, setSelectedGraphId] = useState<string>('');
+  const [loadingGraphs, setLoadingGraphs] = useState<boolean>(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Close popup on click outside
@@ -117,6 +130,34 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [onClose]);
+
+  // Load memory graphs
+  useEffect(() => {
+    const fetchGraphs = async () => {
+      setLoadingGraphs(true);
+      try {
+        const response = await fetch('/api/memory/graphs');
+        if (response.ok) {
+          const graphs = await response.json();
+          setMemoryGraphs(graphs);
+          
+          // Set default graph as selected
+          const defaultGraph = graphs.find((g: MemoryGraph) => g.isDefault);
+          if (defaultGraph) {
+            setSelectedGraphId(defaultGraph.id);
+          } else if (graphs.length > 0) {
+            setSelectedGraphId(graphs[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching memory graphs:', error);
+      } finally {
+        setLoadingGraphs(false);
+      }
+    };
+
+    fetchGraphs();
+  }, []);
 
   // Initialize summary and note based on highlight prop
   useEffect(() => {
@@ -146,7 +187,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
     // Reset note mode when highlight changes
     setIsNoteMode(false);
 
-  }, [highlight]); // Depend only on highlight
+  }, [highlight]);
 
   // Update isNoteMode when initialNoteMode prop changes
   useEffect(() => {
@@ -154,7 +195,7 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
   }, [initialNoteMode]);
 
   const handleClip = async () => {
-    if (isClipping) return; // Prevent multiple clicks
+    if (isClipping || !selectedGraphId) return; // Prevent multiple clicks
 
     setIsClipping(true);
     setClipStatus('loading');
@@ -164,10 +205,11 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       paperId,
       highlightText: highlight.text,
       positionText: highlight.position?.text,
+      selectedGraphId,
       highlight: highlight
     });
     
-    console.log('Clipping highlight to memory, paper ID:', paperId);
+    console.log('Clipping highlight to memory, paper ID:', paperId, 'graph ID:', selectedGraphId);
 
     try {
       const textToClip = highlight.text || highlight.position.text;
@@ -176,8 +218,10 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       console.log('Clip check values:', {
         hasPaperId: !!paperId,
         hasTextToClip: !!textToClip,
+        hasGraphId: !!selectedGraphId,
         paperId,
-        textToClipLength: textToClip?.length
+        textToClipLength: textToClip?.length,
+        selectedGraphId
       });
       
       // Only require text, use a fallback ID if paperId is missing
@@ -191,16 +235,25 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       const response = await fetch('/api/memory/clip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paperId: paperIdToUse, text: textToClip }),
+        body: JSON.stringify({ 
+          paperId: paperIdToUse, 
+          text: textToClip,
+          graphId: selectedGraphId
+        }),
       });
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to clip to memory: ${errorText}`);
       }
+      
+      const result = await response.json();
       setClipStatus('success');
+      
+      const selectedGraph = memoryGraphs.find(g => g.id === selectedGraphId);
       toast({
         title: 'Success',
-        description: 'Highlight clipped to Memory!',
+        description: `Highlight clipped to "${selectedGraph?.name || 'Memory'}" graph!`,
       });
     } catch (error) {
       console.error('Error clipping highlight:', error);
@@ -217,8 +270,6 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
       }, 2000);
     }
   };
-
-
 
   const handleAddToCopilotChat = () => {
     const selectedText = highlight.text || highlight.position.text;
@@ -427,6 +478,28 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
         </div>
       )}
 
+      {/* Memory Graph Selection */}
+      {!isNoteMode && memoryGraphs.length > 0 && (
+        <div className="mb-4">
+          <label className="text-sm font-medium text-slate-700 mb-2 block">
+            Select Memory Graph:
+          </label>
+          <Select value={selectedGraphId} onValueChange={setSelectedGraphId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a memory graph..." />
+            </SelectTrigger>
+            <SelectContent>
+              {memoryGraphs.map((graph) => (
+                <SelectItem key={graph.id} value={graph.id}>
+                  {graph.name}
+                  {graph.isDefault && <span className="text-xs text-gray-500 ml-1">(Default)</span>}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-col space-y-2">
         <div className="flex space-x-2">
@@ -435,13 +508,13 @@ export default function HighlightPopup({ highlight, paperId, onClose, position, 
               {/* Clip Button */}
               <Button
                 onClick={handleClip}
-                disabled={isClipping || clipStatus === 'success'} // Disable while clipping or on success
+                disabled={isClipping || clipStatus === 'success' || !selectedGraphId || loadingGraphs} // Disable while clipping or on success
                 className="flex-1 bg-royal-600 hover:bg-royal-700 text-white flex items-center justify-center gap-2"
               >
                 {clipStatus === 'idle' && <><Clipboard size={16} /><span>Clip To Memory</span></>}
                 {clipStatus === 'loading' && <><Loader2 size={16} className="animate-spin" /><span>Saving...</span></>}
                 {clipStatus === 'success' && <><CheckCircle size={16} /><span>Saved!</span></>}
-                                {clipStatus === 'error' && <><XIcon size={16} /><span>Save Error</span></>}
+                {clipStatus === 'error' && <><XIcon size={16} /><span>Save Error</span></>}
               </Button>
 
               {/* Add to Copilot Chat Button */}

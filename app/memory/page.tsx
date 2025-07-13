@@ -11,6 +11,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
 import SemanticGraph, { type GraphData, type GraphNode } from "@/components/semantic-graph"
 import SimilarityMatrix from "@/components/similarity-matrix"
+import { MemoryTabs } from "@/components/memory-tabs"
+import { MemoryGraph } from "@/app/api/memory/db"
 import dynamic from "next/dynamic"
 
 // Load A-Frame only when needed for this page
@@ -22,6 +24,7 @@ interface MemoryItem {
   paperId: string;
   paperTitle?: string;
   createdAt: string;
+  graphId: string;
 }
 
 interface GraphEdge {
@@ -29,11 +32,14 @@ interface GraphEdge {
   source: string;
   target: string;
   weight: number;
+  graphId: string;
 }
 
 export default function MemoryPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const [graphs, setGraphs] = useState<MemoryGraph[]>([])
+  const [activeGraphId, setActiveGraphId] = useState<string>("")
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], edges: [] })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -41,11 +47,42 @@ export default function MemoryPage() {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.5) // 50% default
   const [updatingThreshold, setUpdatingThreshold] = useState(false)
 
-  // Fetch graph data from API
-  const fetchGraphData = useCallback(async (customThreshold?: number) => {
+  // Fetch memory graphs
+  const fetchGraphs = useCallback(async () => {
     try {
-      console.log('Fetching graph data...')
-      const response = await fetch('/api/memory/list')
+      console.log('Fetching memory graphs...')
+      const response = await fetch('/api/memory/graphs')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      console.log('Received graphs:', data)
+      
+      setGraphs(data)
+      
+      // Set active graph to first graph or default
+      if (data.length > 0 && !activeGraphId) {
+        const defaultGraph = data.find((g: MemoryGraph) => g.isDefault) || data[0]
+        setActiveGraphId(defaultGraph.id)
+      }
+    } catch (error) {
+      console.error('Error fetching graphs:', error)
+      toast({
+        title: "Error",
+        description: `Failed to load memory graphs: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      })
+    }
+  }, [activeGraphId, toast])
+
+  // Fetch graph data from API
+  const fetchGraphData = useCallback(async (graphId: string, customThreshold?: number) => {
+    try {
+      console.log(`Fetching graph data for graph: ${graphId}`)
+      const url = `/api/memory/list?graphId=${graphId}`
+      const response = await fetch(url)
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -72,7 +109,7 @@ export default function MemoryPage() {
           const recalcResponse = await fetch('/api/memory/recalculate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ threshold: customThreshold })
+            body: JSON.stringify({ threshold: customThreshold, graphId })
           })
           
           if (recalcResponse.ok) {
@@ -107,12 +144,19 @@ export default function MemoryPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await fetchGraphData(similarityThreshold)
+      await fetchGraphs()
       setLoading(false)
     }
     
     loadData()
-  }, [fetchGraphData, similarityThreshold])
+  }, [fetchGraphs])
+
+  // Load graph data when active graph changes
+  useEffect(() => {
+    if (activeGraphId) {
+      fetchGraphData(activeGraphId, similarityThreshold)
+    }
+  }, [activeGraphId, similarityThreshold, fetchGraphData])
 
   // Handle threshold change
   const handleThresholdChange = async (newThreshold: number[]) => {
@@ -124,7 +168,9 @@ export default function MemoryPage() {
     
     // Debounce the API call to avoid too many requests
     setTimeout(async () => {
-      await fetchGraphData(threshold)
+      if (activeGraphId) {
+        await fetchGraphData(activeGraphId, threshold)
+      }
       setUpdatingThreshold(false)
       toast({
         title: "Threshold Updated",
@@ -136,12 +182,124 @@ export default function MemoryPage() {
   // Handle manual refresh
   const handleRefresh = async () => {
     setRefreshing(true)
-    await fetchGraphData(similarityThreshold)
+    if (activeGraphId) {
+      await fetchGraphData(activeGraphId, similarityThreshold)
+    }
     setRefreshing(false)
     toast({
       title: "Refreshed",
       description: "Memory graph updated"
     })
+  }
+
+  // Handle tab change
+  const handleTabChange = (graphId: string) => {
+    setActiveGraphId(graphId)
+  }
+
+  // Handle tab creation
+  const handleTabCreate = async (name: string) => {
+    try {
+      const response = await fetch('/api/memory/graphs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create graph')
+      }
+
+      const newGraph = await response.json()
+      setGraphs(prev => [...prev, newGraph])
+      setActiveGraphId(newGraph.id)
+      
+      toast({
+        title: "Graph Created",
+        description: `Memory graph "${name}" created successfully`
+      })
+    } catch (error) {
+      console.error('Error creating graph:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create memory graph",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Handle tab rename
+  const handleTabRename = async (graphId: string, newName: string) => {
+    try {
+      const response = await fetch(`/api/memory/graphs/${graphId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to rename graph')
+      }
+
+      const updatedGraph = await response.json()
+      setGraphs(prev => prev.map(g => g.id === graphId ? updatedGraph : g))
+      
+      toast({
+        title: "Graph Renamed",
+        description: `Memory graph renamed to "${newName}"`
+      })
+    } catch (error) {
+      console.error('Error renaming graph:', error)
+      toast({
+        title: "Error",
+        description: "Failed to rename memory graph",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Handle tab close
+  const handleTabClose = async (graphId: string) => {
+    const graphToDelete = graphs.find(g => g.id === graphId)
+    if (!graphToDelete) return
+
+    if (!window.confirm(`Are you sure you want to delete the memory graph "${graphToDelete.name}"? This will permanently delete all memory items and connections in this graph.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/memory/graphs/${graphId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete graph')
+      }
+
+      setGraphs(prev => prev.filter(g => g.id !== graphId))
+      
+      // If we deleted the active graph, switch to another one
+      if (activeGraphId === graphId) {
+        const remainingGraphs = graphs.filter(g => g.id !== graphId)
+        if (remainingGraphs.length > 0) {
+          setActiveGraphId(remainingGraphs[0].id)
+        } else {
+          setActiveGraphId("")
+        }
+      }
+      
+      toast({
+        title: "Graph Deleted",
+        description: `Memory graph "${graphToDelete.name}" deleted successfully`
+      })
+    } catch (error) {
+      console.error('Error deleting graph:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete memory graph",
+        variant: "destructive"
+      })
+    }
   }
 
   // Handle node deletion
@@ -193,13 +351,13 @@ export default function MemoryPage() {
   // Set up real-time updates (polling every 30 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!loading && !refreshing && !updatingThreshold) {
-        fetchGraphData(similarityThreshold)
+      if (!loading && !refreshing && !updatingThreshold && activeGraphId) {
+        fetchGraphData(activeGraphId, similarityThreshold)
       }
     }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
-  }, [fetchGraphData, loading, refreshing, updatingThreshold, similarityThreshold])
+  }, [fetchGraphData, loading, refreshing, updatingThreshold, activeGraphId, similarityThreshold])
 
   if (loading) {
     return (
@@ -226,7 +384,7 @@ export default function MemoryPage() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-royal-500 mx-auto mb-4" />
-            <p className="text-gray-600">Loading memory graph...</p>
+            <p className="text-gray-600">Loading memory graphs...</p>
           </div>
         </main>
       </div>
@@ -276,6 +434,18 @@ export default function MemoryPage() {
         </div>
       </header>
 
+      {/* Memory Graph Tabs */}
+      {graphs.length > 0 && (
+        <MemoryTabs
+          graphs={graphs}
+          activeGraphId={activeGraphId}
+          onTabChange={handleTabChange}
+          onTabClose={handleTabClose}
+          onTabCreate={handleTabCreate}
+          onTabRename={handleTabRename}
+        />
+      )}
+
       {/* Main Content */}
       <main className="flex-1 py-6">
         <div className="container px-4">
@@ -283,6 +453,13 @@ export default function MemoryPage() {
             <div className="flex items-center gap-2 mb-6">
               <Brain className="h-6 w-6 text-royal-500" />
               <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
+              {activeGraphId && (
+                <div className="bg-royal-100 px-3 py-1 rounded-full">
+                  <span className="text-sm font-medium text-royal-700">
+                    {graphs.find(g => g.id === activeGraphId)?.name || 'Unknown Graph'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Graph or Empty State */}
@@ -381,6 +558,7 @@ export default function MemoryPage() {
                   <SimilarityMatrix 
                     refreshTrigger={refreshTrigger} 
                     currentThreshold={similarityThreshold}
+                    graphId={activeGraphId}
                   />
                 </div>
               </div>
@@ -389,14 +567,14 @@ export default function MemoryPage() {
             {/* Instructions */}
             <Card className="mt-6 bg-royal-50 border-royal-200">
               <CardContent className="p-4">
-                <h3 className="font-semibold text-royal-700 mb-2">How to Use</h3>
+                <h3 className="font-semibold text-royal-700 mb-2">How to Use Multiple Memory Graphs</h3>
                 <ul className="text-sm text-royal-600 space-y-1">
-                  <li>• <strong>Clip sentences</strong> in the PDF reader to add them to your memory</li>
-                  <li>• <strong>Hover over nodes</strong> to see the full sentence text</li>
-                  <li>• <strong>Click nodes</strong> to see details and navigate to the source paper</li>
-                  <li>• <strong>Search</strong> to highlight matching nodes in green</li>
-                  <li>• <strong>Adjust threshold</strong> with the slider to control connection sensitivity</li>
-                  <li>• <strong>Debug panel</strong> on the right shows all similarity scores in real-time</li>
+                  <li>• <strong>Create new graphs</strong> using the "New Graph" button in the tabs</li>
+                  <li>• <strong>Switch between graphs</strong> by clicking on the tabs</li>
+                  <li>• <strong>Rename graphs</strong> by clicking the edit icon on any tab</li>
+                  <li>• <strong>Delete graphs</strong> by clicking the X icon (default graph cannot be deleted)</li>
+                  <li>• <strong>Clip to specific graphs</strong> when highlighting text in papers</li>
+                  <li>• <strong>Each graph is independent</strong> - connections only form within the same graph</li>
                 </ul>
               </CardContent>
             </Card>

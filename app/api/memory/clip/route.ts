@@ -12,28 +12,32 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log('Request body:', body);
     
-    const { paperId, text, paperTitle } = body;
+    const { paperId, text, paperTitle, graphId } = body;
 
     if (!paperId || !text) {
       console.error('Missing required fields:', { paperId: !!paperId, text: !!text });
       return new NextResponse('Missing paperId or text', { status: 400 });
     }
 
-    console.log(`Processing clip for paper ${paperId}: "${text.substring(0, 100)}..."`);
+    // Get or create default graph if no graphId provided
+    const targetGraphId = graphId || mockDb.getOrCreateDefaultGraph(userId).id;
+    console.log(`Using graph ID: ${targetGraphId}`);
 
-    // Step 0: Check for duplicate text to prevent double-clipping
-    const existingItems = mockDb.listMemoryItems({ userId });
+    console.log(`Processing clip for paper ${paperId}: "${text.substring(0, 100)}..." (graph: ${targetGraphId})`);
+
+    // Step 0: Check for duplicate text to prevent double-clipping within the same graph
+    const existingItems = mockDb.listMemoryItems({ userId, graphId: targetGraphId });
     const duplicateItem = existingItems.find(item => 
       item.text.trim().toLowerCase() === text.trim().toLowerCase() && 
       item.paperId === paperId
     );
     
     if (duplicateItem) {
-      console.log(`Duplicate text detected, returning existing item: ${duplicateItem.id}`);
+      console.log(`Duplicate text detected in graph ${targetGraphId}, returning existing item: ${duplicateItem.id}`);
       return NextResponse.json({
         memoryItem: duplicateItem,
         newEdges: [],
-        message: "Text already exists in memory",
+        message: "Text already exists in this memory graph",
         hasEmbedding: !!duplicateItem.embedding,
         isDuplicate: true
       }, { status: 200 });
@@ -59,16 +63,17 @@ export async function POST(req: Request) {
       text: text,
       source: 'clip',
       embedding: embedding,
-      paperTitle: paperTitle
+      paperTitle: paperTitle,
+      graphId: targetGraphId
     });
 
-    console.log(`Memory item created: ${memoryItem.id}`);
+    console.log(`Memory item created: ${memoryItem.id} (graph: ${targetGraphId})`);
 
     // Step 3: If we have an embedding, calculate similarities and create edges
     let newEdges: any[] = [];
     if (embedding) {
       try {
-        console.log('Processing similarities with other memory items...');
+        console.log('Processing similarities with other memory items in the same graph...');
         console.log(`Current threshold for connections: 0.5 (50%)`);
         newEdges = await mockDb.processNewMemoryWithSimilarity(memoryItem, 0.5);
         console.log(`Created ${newEdges.length} new edges based on similarity > 50%`);
@@ -84,8 +89,9 @@ export async function POST(req: Request) {
     const response = {
       memoryItem,
       newEdges,
-      message: `Clipped text successfully. ${newEdges.length} connections found.`,
-      hasEmbedding: !!embedding
+      message: `Clipped text successfully to ${targetGraphId}. ${newEdges.length} connections found.`,
+      hasEmbedding: !!embedding,
+      graphId: targetGraphId
     };
 
     console.log('Returning response:', response);

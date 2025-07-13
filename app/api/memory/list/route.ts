@@ -3,15 +3,30 @@ import { mockDb } from '../db';
 
 export async function GET(req: Request) {
   try {
-    // Use a mock/default userId instead of requiring authentication
     const userId = "demo-user";
-
-    // Get complete graph data (nodes and edges) for this user
-    const graphData = mockDb.getGraphData({ userId });
     
-    console.log(`Retrieved graph data: ${graphData.nodes.length} nodes, ${graphData.edges.length} edges`);
-
-    return NextResponse.json(graphData, { status: 200 });
+    // Parse query parameters
+    const url = new URL(req.url);
+    const graphId = url.searchParams.get('graphId');
+    
+    console.log('=== MEMORY LIST API CALLED ===');
+    console.log(`User: ${userId}, Graph filter: ${graphId || 'all'}`);
+    
+    // Ensure default graph exists
+    const defaultGraph = mockDb.getOrCreateDefaultGraph(userId);
+    const targetGraphId = graphId || defaultGraph.id;
+    
+    console.log(`Using graph ID: ${targetGraphId}`);
+    
+    // Get filtered data
+    const graphData = mockDb.getGraphData({ 
+      userId, 
+      graphId: targetGraphId 
+    });
+    
+    console.log(`Found ${graphData.nodes.length} nodes and ${graphData.edges.length} edges in graph ${targetGraphId}`);
+    
+    return NextResponse.json(graphData);
   } catch (error: any) {
     console.error('[MEMORY_LIST_GET]', error);
     return new NextResponse(`Internal Server Error: ${error.message}`, { status: 500 });
