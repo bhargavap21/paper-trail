@@ -35,6 +35,7 @@ interface SemanticGraphProps {
   graphData: GraphData;
   onNodeClick?: (node: GraphNode) => void;
   onNodeDelete?: (nodeId: string) => void;
+  onEdgeClick?: (edge: GraphEdge, sourceNode: GraphNode, targetNode: GraphNode) => void;
   height?: string;
 }
 
@@ -42,6 +43,7 @@ export default function SemanticGraph({
   graphData, 
   onNodeClick, 
   onNodeDelete,
+  onEdgeClick,
   height = "600px" 
 }: SemanticGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -395,6 +397,46 @@ export default function SemanticGraph({
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
         setSelectedNode(null);
+      }
+    });
+
+    // Edge click handler
+    cy.on('tap', 'edge', (evt) => {
+      const edge = evt.target;
+      const edgeData = edge.data();
+      
+      if (onEdgeClick) {
+        // Find the source and target nodes
+        const sourceNode = cy.getElementById(edgeData.source);
+        const targetNode = cy.getElementById(edgeData.target);
+        
+        const sourceData = sourceNode.data();
+        const targetData = targetNode.data();
+        
+        const edgeInfo: GraphEdge = {
+          id: edgeData.id,
+          source: edgeData.source,
+          target: edgeData.target,
+          weight: edgeData.weight
+        };
+        
+        const sourceNodeInfo: GraphNode = {
+          id: sourceData.id,
+          text: sourceData.fullText,
+          paperId: sourceData.paperId,
+          paperTitle: sourceData.paperTitle,
+          createdAt: sourceData.createdAt
+        };
+        
+        const targetNodeInfo: GraphNode = {
+          id: targetData.id,
+          text: targetData.fullText,
+          paperId: targetData.paperId,
+          paperTitle: targetData.paperTitle,
+          createdAt: targetData.createdAt
+        };
+        
+        onEdgeClick(edgeInfo, sourceNodeInfo, targetNodeInfo);
       }
     });
 

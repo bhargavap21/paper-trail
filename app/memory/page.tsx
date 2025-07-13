@@ -8,12 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { BookOpen, Brain, Loader2, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import SemanticGraph, { type GraphData, type GraphNode } from "@/components/semantic-graph"
+import SemanticGraph, { type GraphData, type GraphNode, type GraphEdge as SemanticGraphEdge } from "@/components/semantic-graph"
 import SimilarityMatrix from "@/components/similarity-matrix"
 import { MemoryTabs } from "@/components/memory-tabs"
 import { MemoryGraph } from "@/app/api/memory/db"
 import { useMemoryGraphSession } from "@/hooks/use-memory-graph-session"
 import dynamic from "next/dynamic"
+
+// Dynamically import MemoryCopilot
+const MemoryCopilot = dynamic(() => import('@/components/memory-copilot'), {
+  ssr: false,
+})
 
 // Load A-Frame only when needed for this page
 const AFrameScript = dynamic(() => import('@/components/aframe-script'), { ssr: false })
@@ -46,6 +51,11 @@ export default function MemoryPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [similarityThreshold, setSimilarityThreshold] = useState(0.5) // 50% default
   const [updatingThreshold, setUpdatingThreshold] = useState(false)
+  
+  // Copilot state
+  const [copilotOpen, setCopilotOpen] = useState(true)
+  const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
+  const [forceExpandCopilot, setForceExpandCopilot] = useState(false)
 
   // Fetch memory graphs
   const fetchGraphs = useCallback(async () => {
@@ -366,6 +376,30 @@ export default function MemoryPage() {
     // You could implement additional actions here like showing more details
   }
 
+  // Handle edge clicks for connection explanation
+  const handleEdgeClick = (edge: SemanticGraphEdge, sourceNode: GraphNode, targetNode: GraphNode) => {
+    console.log('Edge clicked:', edge, sourceNode, targetNode)
+    
+    // Generate auto-prompt for explaining the connection
+    const prompt = `Explain the connection between these two concepts:
+
+Concept 1: "${sourceNode.text}"
+
+Concept 2: "${targetNode.text}"
+
+Please analyze why these two concepts might be related and what insights can be drawn from their connection. Consider their semantic similarity and potential research implications.`
+
+    // Set the auto-prompt and open copilot
+    setCopilotAutoPrompt(prompt)
+    setCopilotOpen(true)
+    setForceExpandCopilot(true)
+    
+    // Reset force expand after a short delay
+    setTimeout(() => {
+      setForceExpandCopilot(false)
+    }, 100)
+  }
+
   // Set up real-time updates (polling every 30 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -445,9 +479,9 @@ export default function MemoryPage() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 py-6">
-        <div className="container px-4">
-          <div className="max-w-6xl mx-auto">
+      <main className="flex-1 py-6 overflow-hidden">
+        <div className="container px-4 h-full">
+          <div className="max-w-full mx-auto h-full flex flex-col">
             <div className="flex items-center gap-2 mb-6">
               <Brain className="h-6 w-6 text-royal-500" />
               <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
@@ -461,31 +495,49 @@ export default function MemoryPage() {
             </div>
 
             {/* Graph or Empty State */}
-            {graphData.nodes.length === 0 ? (
-              <Card className="bg-white shadow-sm">
-                <CardContent className="p-12 text-center">
-                  <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Brain className="h-8 w-8 text-royal-500" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    No Memory Items Yet
-                  </h2>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Start highlighting text in papers to build your semantic knowledge graph. 
-                    Similar concepts will automatically connect based on AI embeddings.
-                  </p>
-                  <NextLink href="/reader">
-                    <Button className="bg-royal-500 hover:bg-royal-600 text-white">
-                      Upload Your First Paper
-                    </Button>
-                  </NextLink>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Graph */}
-                <div className="lg:col-span-2">
+            <div className="flex-1 min-h-0">
+              {graphData.nodes.length === 0 ? (
+              <div className="flex gap-6 h-full">
+                {/* Empty State */}
+                <div className="flex-1">
                   <Card className="bg-white shadow-sm">
+                    <CardContent className="p-12 text-center">
+                      <div className="bg-royal-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <Brain className="h-8 w-8 text-royal-500" />
+                      </div>
+                      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                        No Memory Items Yet
+                      </h2>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        Start highlighting text in papers to build your semantic knowledge graph. 
+                        Similar concepts will automatically connect based on AI embeddings.
+                      </p>
+                      <NextLink href="/reader">
+                        <Button className="bg-royal-500 hover:bg-royal-600 text-white">
+                          Upload Your First Paper
+                        </Button>
+                      </NextLink>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {/* Memory Copilot */}
+                <div className="w-80 h-full">
+                  <MemoryCopilot
+                    isOpen={copilotOpen}
+                    onClose={() => setCopilotOpen(false)}
+                    autoPrompt={copilotAutoPrompt}
+                    forceExpand={forceExpandCopilot}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-6 h-full">
+                {/* Main Content */}
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Main Graph */}
+                  <div className="lg:col-span-2">
+                    <Card className="bg-white shadow-sm">
                     <CardContent className="p-6">
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-4">
@@ -545,6 +597,7 @@ export default function MemoryPage() {
                         graphData={graphData}
                         onNodeClick={handleNodeClick}
                         onNodeDelete={handleNodeDelete}
+                        onEdgeClick={handleEdgeClick}
                         height="700px"
                       />
                     </CardContent>
@@ -558,9 +611,21 @@ export default function MemoryPage() {
                     currentThreshold={similarityThreshold}
                     graphId={activeGraphId}
                   />
+                  </div>
+                </div>
+                
+                {/* Memory Copilot */}
+                <div className="w-80 h-full">
+                  <MemoryCopilot
+                    isOpen={copilotOpen}
+                    onClose={() => setCopilotOpen(false)}
+                    autoPrompt={copilotAutoPrompt}
+                    forceExpand={forceExpandCopilot}
+                  />
                 </div>
               </div>
             )}
+            </div>
 
             {/* Instructions */}
             <Card className="mt-6 bg-royal-50 border-royal-200">
