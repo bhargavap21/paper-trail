@@ -211,11 +211,6 @@ export default function CopilotChat({ isOpen, onClose, initialContext, paperId, 
           <div className="flex items-center gap-2">
             <span className="font-sans font-bold text-royal-700">Copilot</span>
             <Bot className="h-5 w-5 text-royal-600" />
-            {messages.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {messages.length}
-              </Badge>
-            )}
           </div>
         )}
       </div>

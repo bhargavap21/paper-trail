@@ -283,11 +283,6 @@ export function UploadPapersSidebar({ onPaperClick, onPaperDeleted, onAllPapersD
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-royal-600" />
               <span className="font-sans font-bold text-royal-700">Papers</span>
-              {papers.length > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {papers.length}
-                </Badge>
-              )}
             </div>
           )}
           <div className="flex items-center gap-1">

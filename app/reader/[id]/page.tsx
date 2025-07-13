@@ -19,6 +19,7 @@ import {
   Share,
   Sparkles,
   MessageCircle,
+  Video,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { UploadPapersSidebar } from "@/components/upload-papers-sidebar"
@@ -307,6 +308,15 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     setActivePaperId('');
   };
 
+  const handleGenerateSummaryVideo = () => {
+    // Placeholder for video generation logic
+    // This would integrate with external API to generate video from PDF
+    toast({
+      title: "Video Generation Started",
+      description: `Generating summary video for "${currentPaper?.title || 'this paper'}". This may take a few minutes.`,
+    });
+  };
+
 
 
   // Show loading state only for initial load
@@ -465,19 +475,40 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
           <div className="absolute inset-0 flex justify-center overflow-hidden">
             {/* PDF Viewer - Centered Container */}
             {currentPaper.filePath && (
-              <div className="w-full max-w-6xl overflow-hidden">
+              <div className="w-full max-w-6xl overflow-hidden relative">
                 <PDFViewer 
                   url={currentPaper.filePath} 
                   fileName={currentPaper.originalName || currentPaper.title}
                   paperId={activePaperId}
                   onAddToCopilotChat={handleAddToCopilotChat}
                 />
+                
+                {/* Generate Summary Video Button - Floating Action Button */}
+                <div className="absolute bottom-6 right-6 z-20">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={handleGenerateSummaryVideo}
+                          className="bg-royal-500 hover:bg-royal-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full h-14 w-14 p-0 group"
+                          size="sm"
+                        >
+                          <Video className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="bg-white border border-gray-200 text-gray-900 shadow-lg">
+                        <p className="font-medium">Generate Summary Video</p>
+                        <p className="text-sm text-gray-600">Create an AI-generated video summary of this paper</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
             )}
 
             {/* Abstract and Sections - Centered (only if no PDF) */}
             {!currentPaper.filePath && (
-              <div className="w-full max-w-6xl overflow-auto">
+              <div className="w-full max-w-6xl overflow-auto relative">
                 <main className="py-8 px-4">
                   {/* Abstract */}
                   {currentPaper.abstract && (
@@ -503,6 +534,27 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
                     </div>
                   )}
                 </main>
+
+                {/* Generate Summary Video Button - Floating Action Button */}
+                <div className="absolute bottom-6 right-6 z-20">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={handleGenerateSummaryVideo}
+                          className="bg-royal-500 hover:bg-royal-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-full h-14 w-14 p-0 group"
+                          size="sm"
+                        >
+                          <Video className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="bg-white border border-gray-200 text-gray-900 shadow-lg">
+                        <p className="font-medium">Generate Summary Video</p>
+                        <p className="text-sm text-gray-600">Create an AI-generated video summary of this paper</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
             )}
           </div>

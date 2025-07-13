@@ -11,11 +11,11 @@ import { UploadPapersSidebar } from "@/components/upload-papers-sidebar"
 // Dynamically import CopilotChat
 const CopilotChat = dynamic(() => import('@/components/copilot-chat'), {
   ssr: false,
+  loading: () => <div></div> // No loading spinner
 })
 
 export default function ReaderPage() {
   const [papers, setPapers] = useState([])
-  const [loading, setLoading] = useState(true)
   const [copilotChatOpen, setCopilotChatOpen] = useState(false)
   const router = useRouter()
 
@@ -28,31 +28,19 @@ export default function ReaderPage() {
           const papersList = data.papers || []
           setPapers(papersList)
           
-          // If papers exist, redirect to the first one
+          // If papers exist, redirect to the first one immediately
           if (papersList.length > 0) {
-            router.push(`/reader/${papersList[0].id}`)
+            router.replace(`/reader/${papersList[0].id}`)
+            return
           }
         }
       } catch (error) {
         console.error('Error fetching papers:', error)
-      } finally {
-        setLoading(false)
       }
     }
 
     fetchPapers()
   }, [router])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-medium text-gray-600">Loading...</h2>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-ivory">

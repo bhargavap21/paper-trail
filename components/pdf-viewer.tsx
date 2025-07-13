@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
 import { ZoomIn, ZoomOut } from "lucide-react"
@@ -8,11 +8,7 @@ import { ZoomIn, ZoomOut } from "lucide-react"
 // Dynamically import react-pdf components with ssr: false to avoid canvas issues
 const PDFComponents = dynamic(() => import('./pdf-components'), {
   ssr: false,
-  loading: () => (
-    <div className="flex justify-center items-center h-96">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-royal-500"></div>
-    </div>
-  )
+  loading: () => <div></div> // No loading spinner for faster tab switches
 });
 
 interface PDFViewerProps {
@@ -27,6 +23,13 @@ export function PDFViewer({ url, fileName, paperId, onAddToCopilotChat }: PDFVie
   const [scale, setScale] = useState(2.0)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [isValidPdf, setIsValidPdf] = useState<boolean>(true)
+
+  // Reset error states when URL changes (when switching papers)
+  useEffect(() => {
+    setPdfError(null)
+    setIsValidPdf(true)
+    // Don't reset numPages to avoid unnecessary loading states
+  }, [url])
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages)

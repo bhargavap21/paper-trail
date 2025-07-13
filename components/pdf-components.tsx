@@ -860,8 +860,8 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
           renderAnnotationLayer={false}
           className="shadow-xl"
           loading={
-            <div className="flex justify-center items-center h-[60vh]">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-royal-500"></div>
+            <div className="flex justify-center items-center h-[200px]">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-royal-500"></div>
             </div>
           }
           onLoadSuccess={() => handlePageLoadSuccess(pageNum)}
@@ -949,8 +949,8 @@ export default function PDFComponents({ file, onLoadSuccess, onLoadError, pageNu
             onLoadSuccess={handleDocumentLoadSuccess}
             onLoadError={handleError}
             loading={
-              <div className="flex justify-center items-center h-[80vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-royal-500"></div>
+              <div className="flex justify-center items-center h-[20vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-royal-500"></div>
               </div>
             }
             error={
