@@ -13,6 +13,7 @@ import SemanticGraph, { type GraphData, type GraphNode } from "@/components/sema
 import SimilarityMatrix from "@/components/similarity-matrix"
 import { MemoryTabs } from "@/components/memory-tabs"
 import { MemoryGraph } from "@/app/api/memory/db"
+import { useMemoryGraphSession } from "@/hooks/use-memory-graph-session"
 import dynamic from "next/dynamic"
 
 // Load A-Frame only when needed for this page
@@ -38,6 +39,7 @@ interface GraphEdge {
 export default function MemoryPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { sessionGraphId } = useMemoryGraphSession()
   const [graphs, setGraphs] = useState<MemoryGraph[]>([])
   const [activeGraphId, setActiveGraphId] = useState<string>("")
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], edges: [] })
@@ -62,10 +64,28 @@ export default function MemoryPage() {
       
       setGraphs(data)
       
-      // Set active graph to first graph or default
+      // Set active graph with priority: session graph > default graph > first graph
       if (data.length > 0 && !activeGraphId) {
-        const defaultGraph = data.find((g: MemoryGraph) => g.isDefault) || data[0]
-        setActiveGraphId(defaultGraph.id)
+        let targetGraph: MemoryGraph | undefined
+        
+        // First priority: session-stored graph (if it exists in the list)
+        if (sessionGraphId) {
+          targetGraph = data.find((g: MemoryGraph) => g.id === sessionGraphId)
+        }
+        
+        // Second priority: default graph
+        if (!targetGraph) {
+          targetGraph = data.find((g: MemoryGraph) => g.isDefault)
+        }
+        
+        // Third priority: first graph
+        if (!targetGraph) {
+          targetGraph = data[0]
+        }
+        
+        if (targetGraph) {
+          setActiveGraphId(targetGraph.id)
+        }
       }
     } catch (error) {
       console.error('Error fetching graphs:', error)
@@ -75,7 +95,7 @@ export default function MemoryPage() {
         variant: "destructive"
       })
     }
-  }, [activeGraphId, toast])
+  }, [activeGraphId, sessionGraphId, toast])
 
   // Fetch graph data from API
   const fetchGraphData = useCallback(async (graphId: string, customThreshold?: number) => {
