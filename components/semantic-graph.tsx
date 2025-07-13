@@ -35,7 +35,7 @@ interface SemanticGraphProps {
   graphData: GraphData;
   onNodeClick?: (node: GraphNode) => void;
   onNodeDelete?: (nodeId: string) => void;
-  onEdgeClick?: (edge: GraphEdge, sourceNode: GraphNode, targetNode: GraphNode) => void;
+  onEdgeClick?: (edge: GraphEdge, sourceNode: GraphNode, targetNode: GraphNode, position?: { x: number; y: number }) => void;
   height?: string;
 }
 
@@ -406,6 +406,13 @@ export default function SemanticGraph({
       const edgeData = edge.data();
       
       if (onEdgeClick) {
+        // Get click position
+        const renderedPosition = evt.renderedPosition || evt.position;
+        const position = {
+          x: renderedPosition.x,
+          y: renderedPosition.y
+        };
+        
         // Find the source and target nodes
         const sourceNode = cy.getElementById(edgeData.source);
         const targetNode = cy.getElementById(edgeData.target);
@@ -436,7 +443,7 @@ export default function SemanticGraph({
           createdAt: targetData.createdAt
         };
         
-        onEdgeClick(edgeInfo, sourceNodeInfo, targetNodeInfo);
+        onEdgeClick(edgeInfo, sourceNodeInfo, targetNodeInfo, position);
       }
     });
 

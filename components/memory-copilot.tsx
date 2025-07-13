@@ -174,9 +174,8 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
 
   return (
     <div className={cn(
-      isCollapsed
-        ? "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out w-12"
-        : "flex flex-col h-full bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out w-80"
+      "flex flex-col h-screen bg-gray-50 border-l border-gray-200 transition-all duration-300 ease-in-out",
+      isCollapsed ? "w-12" : "w-80"
     )}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 pl-4 border-b border-gray-200 bg-white">
@@ -216,10 +215,10 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
       {!isCollapsed && (
         <>
           {/* Messages */}
-          <ScrollArea className="flex-1">
-            <div className={messages.length === 0 ? "flex flex-col items-center justify-center h-full w-full" : "p-3 pl-4"}>
+          <ScrollArea className="flex-1 overflow-hidden">
+            <div className={messages.length === 0 ? "flex flex-col items-center justify-center h-full w-full min-h-[400px]" : "p-3 pl-4"}>
               {messages.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center w-full mt-20">
+                <div className="flex flex-1 flex-col items-center justify-center w-full">
                   <div className="inline-flex items-center justify-center rounded-full bg-gray-100 p-4 mb-2">
                     <Bot className="h-8 w-8 text-gray-400" />
                   </div>
@@ -254,7 +253,7 @@ export default function MemoryCopilot({ isOpen, onClose, autoPrompt, forceExpand
                           </span>
                         </div>
                         <div 
-                          className="text-sm leading-relaxed"
+                          className="text-sm leading-relaxed break-words"
                           dangerouslySetInnerHTML={formatMessageContent(message.content)}
                         />
                       </div>
