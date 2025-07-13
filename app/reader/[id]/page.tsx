@@ -22,6 +22,7 @@ import {
   Video,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useReaderStore, PaperType } from "@/lib/reader-store"
 import { UploadPapersSidebar } from "@/components/upload-papers-sidebar"
 import { PaperTabs } from "@/components/paper-tabs"
 import { PDFViewer } from "@/components/pdf-viewer"
@@ -108,27 +109,12 @@ const paperData = {
 
 // Removed initialOpenPapers to prevent resetting tabs
 
-// Define type for paper state
-interface PaperType {
-  _id: string;
-  title: string;
-  authors: string[] | string;
-  abstract?: string;
-  year?: string;
-  venue?: string;
-  url?: string;
-  filePath?: string;
-  sections?: any[]; // Or a more specific type
-  originalName?: string;
-}
-
 export default function ReaderPage({ params }: { params: { id: string } }) {
   // Use React.use() to unwrap params as recommended by Next.js
   const unwrappedParams = use(params as any) as { id: string };
   const paperIdFromUrl = unwrappedParams.id;
   
-  const [activePaperId, setActivePaperId] = useState(paperIdFromUrl || "")
-  const [openPapers, setOpenPapers] = useState<Array<{ id: string; title: string; paper: PaperType }>>([])
+  const { openPapers, setOpenPapers, activePaperId, setActivePaperId, addPaper, removePaper, clearAllPapers } = useReaderStore()
   const [copilotChatOpen, setCopilotChatOpen] = useState(true)
   const [copilotAutoPrompt, setCopilotAutoPrompt] = useState<string>('')
   const [forceExpandCopilot, setForceExpandCopilot] = useState(false)
@@ -139,6 +125,11 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
   // Get the current active paper from openPapers
   const currentPaper = openPapers.find(p => p.id === activePaperId)?.paper || null;
 
+  // Hydrate persisted state on mount
+  useEffect(() => {
+    useReaderStore.persist.rehydrate();
+  }, []);
+
   // Fetch paper data from API (only on initial load)
   useEffect(() => {
     const fetchInitialPaper = async (idToFetch: string) => {
@@ -146,8 +137,9 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
          return;
       }
       
-      // Check if paper is already loaded
+      // Check if paper is already loaded in saved tabs
       if (openPapers.some(p => p.id === idToFetch)) {
+        // Paper is already loaded, just switch to it
         setActivePaperId(idToFetch);
         return;
       }
@@ -167,12 +159,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         const actualPaperId = fetchedPaper._id.toString();
         
         // Add to open papers with full paper data
-        setOpenPapers(prev => {
-          if (!prev.some(p => p.id === actualPaperId)) {
-            return [...prev, { id: actualPaperId, title: fetchedPaper.title, paper: fetchedPaper }];
-          }
-          return prev;
-        });
+        addPaper({ id: actualPaperId, title: fetchedPaper.title, paper: fetchedPaper });
         
         setActivePaperId(actualPaperId);
         
@@ -187,20 +174,21 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         // Use mock data as fallback
         const mockPaper = paperData[idToFetch as keyof typeof paperData];
         if (mockPaper) {
-          setOpenPapers(prev => {
-            if (!prev.some(p => p.id === idToFetch)) {
-              return [...prev, { id: idToFetch, title: mockPaper.title, paper: mockPaper as PaperType }];
-            }
-            return prev;
-          });
+          addPaper({ id: idToFetch, title: mockPaper.title, paper: mockPaper as PaperType });
           setActivePaperId(idToFetch);
         }
       }
     };
 
-    fetchInitialPaper(paperIdFromUrl);
+    // Only fetch if we have a paper ID from URL and it's not already loaded
+    if (paperIdFromUrl && !openPapers.some(p => p.id === paperIdFromUrl)) {
+      fetchInitialPaper(paperIdFromUrl);
+    } else if (paperIdFromUrl && openPapers.some(p => p.id === paperIdFromUrl)) {
+      // Paper is already loaded, just switch to it
+      setActivePaperId(paperIdFromUrl);
+    }
     
-  }, [paperIdFromUrl, toast]);
+      }, [paperIdFromUrl, openPapers, addPaper, setActivePaperId, toast]);
 
   const handleTabChange = (id: string) => {
     // Just switch tabs without navigation - instant switching!
@@ -227,11 +215,11 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
         const fetchedPaper: PaperType = data.paper;
         
         // Add to open papers with full paper data
-        setOpenPapers(prev => [...prev, { 
+        addPaper({ 
           id: paperId, 
           title: fetchedPaper.title, 
           paper: fetchedPaper 
-        }]);
+        });
         
         // Switch to the new tab
         setActivePaperId(paperId);
@@ -255,7 +243,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
   const handleTabClose = (id: string) => {
     const newOpenPapers = openPapers.filter((paper) => paper.id !== id);
-    setOpenPapers(newOpenPapers);
+    removePaper(id);
     
     // If we're closing the currently active tab, switch to another tab
     if (id === activePaperId && newOpenPapers.length > 0) {
@@ -298,8 +286,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
   const handleAllPapersDeleted = () => {
     // Close all tabs
-    setOpenPapers([]);
-    setActivePaperId('');
+    clearAllPapers();
   };
 
   const handleGenerateSummaryVideo = () => {
@@ -313,20 +300,7 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
 
 
 
-  // Show not found state only when there's a paper ID in URL but it failed to load AND we're not in a tab-closed state
-  if (!currentPaper && openPapers.length === 0 && activePaperId !== '') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Paper not found</h1>
-          <p className="text-gray-500 mb-6">The requested paper could not be found.</p>
-          <Link href="/reader">
-            <Button className="bg-royal-500 hover:bg-royal-600 text-white">Upload a Paper</Button>
-          </Link>
-        </div>
-      </div>
-    )
-  }
+
 
   // Show blank state if no tabs are open (regardless of current paper)
   if (openPapers.length === 0) {
@@ -400,22 +374,80 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
     );
   } 
 
-  // Safety check for currentPaper (should not happen given the logic above)
+
+
+  // Display the PDF if filePath exists - fall back to blank state if no current paper
   if (!currentPaper) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Error</h1>
-          <p className="text-gray-500 mb-6">Unable to load paper data.</p>
-          <Link href="/reader">
-            <Button className="bg-royal-500 hover:bg-royal-600 text-white">Go to Reader</Button>
-          </Link>
+      <div className="flex flex-col h-screen bg-ivory">
+        {/* Header */}
+        <header className="border-b shadow-sm bg-white">
+          <div className="flex h-16 items-center px-4 md:px-6 relative">
+            <Link href="/" className="flex items-center gap-2 mr-8">
+              <div className="bg-royal-500 p-1.5 rounded-lg">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-sans font-bold text-royal-500">
+                Eureka
+              </span>
+            </Link>
+            <nav className="hidden md:flex gap-6 absolute left-1/2 transform -translate-x-1/2">
+              <Link href="/reader" className="font-sans font-bold text-royal-700 underline underline-offset-4">Reader</Link>
+              <Link href="/search" className="font-sans font-medium text-royal-500 hover:text-royal-600">Search</Link>
+              <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
+              <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
+            </nav>
+          </div>
+        </header>
+
+        {/* Paper Tabs */}
+        <PaperTabs
+          papers={openPapers.map(p => ({ id: p.id, title: p.title }))}
+          activePaperId={activePaperId}
+          onTabChange={handleTabChange}
+          onTabClose={handleTabClose}
+        />
+
+        {/* Main Content with Sidebars */}
+        <div className="flex-1 relative overflow-hidden">
+          {/* Left Sidebar */}
+          <div className="absolute left-0 top-0 bottom-0 z-10">
+            <UploadPapersSidebar onPaperClick={handlePaperClickFromSidebar} onPaperDeleted={handlePaperDeleted} onAllPapersDeleted={handleAllPapersDeleted} />
+          </div>
+
+          {/* Center Content - Always Centered */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center space-y-6 max-w-md">
+              <div className="inline-flex items-center justify-center rounded-full bg-royal-100 p-6 text-royal-500">
+                <BookOpen className="h-12 w-12" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-gray-800">No Papers Open</h1>
+                <p className="text-gray-500">
+                  Click on a paper from the sidebar to open a new tab, or upload a new paper to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="absolute right-0 top-0 bottom-0 z-10">
+          <CopilotChat
+            isOpen={true}
+            onClose={() => {
+              setCopilotChatOpen(false);
+              setCopilotAutoPrompt(''); // Clear auto-prompt when closing
+            }}
+            paperId={activePaperId}
+            autoPrompt={copilotAutoPrompt}
+              forceExpand={forceExpandCopilot}
+          />
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
-  // Display the PDF if filePath exists
   return (
     <div className="flex flex-col h-screen bg-ivory">
       {/* Header */}
