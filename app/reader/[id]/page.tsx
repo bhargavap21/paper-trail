@@ -306,9 +306,10 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
       setActivePaperId(nextPaperId);
       window.history.replaceState(null, '', `/reader/${nextPaperId}`);
     } else if (newOpenPapers.length === 0) {
-      // If no tabs left, clear active paper and show blank state within the same component
+      // If no tabs left, clear active paper and navigate to base reader page
       setActivePaperId('');
-      // DON'T change the URL - keep the current URL to stay on the same component
+      // Navigate to base reader page to prevent the useEffect from reloading the paper
+      window.history.replaceState(null, '', '/reader');
     }
   };
 
