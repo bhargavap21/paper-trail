@@ -481,7 +481,7 @@ export default function MemoryPage() {
         <div className="absolute top-0 bottom-0 left-0 right-80 overflow-auto scrollbar-hide">
           <main className="py-6">
             <div className="container px-4">
-              <div className="max-w-6xl mx-auto">
+              <div className="max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 mb-6">
                   <Brain className="h-6 w-6 text-royal-500" />
                   <h1 className="text-3xl font-sans font-bold text-royal-500">Semantic Memory Graph</h1>
@@ -516,9 +516,9 @@ export default function MemoryPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
                     {/* Main Graph */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-5">
                       <Card className="bg-white shadow-sm">
                         <CardContent className="p-6">
                           <div className="mb-6">
@@ -587,7 +587,7 @@ export default function MemoryPage() {
                     </div>
 
                     {/* Similarity Matrix */}
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-2">
                       <SimilarityMatrix 
                         refreshTrigger={refreshTrigger} 
                         currentThreshold={similarityThreshold}
