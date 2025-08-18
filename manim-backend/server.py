@@ -14,8 +14,8 @@ import fitz  # PyMuPDF for PDF compression
 # Set FFmpeg path for MoviePy before importing video_generator
 os.environ['IMAGEIO_FFMPEG_EXE'] = '/opt/homebrew/bin/ffmpeg'
 
-# Import our video generation pipeline
-from video_generator import generate_summary_video, generate_summary_video_upload
+# Import our video generation pipeline (using simple approach)
+from simple_video_generator import generate_simple_summary_video as generate_summary_video, generate_simple_summary_video_upload as generate_summary_video_upload
 
 # Initialize Weave for API tracking (with fallback)
 try:
