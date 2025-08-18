@@ -424,6 +424,10 @@ export default function MemoryPage() {
               <NextLink href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</NextLink>
               <NextLink href="/memory" className="font-sans font-bold text-royal-700 underline underline-offset-4">Memory</NextLink>
             </nav>
+            <div className="ml-auto hidden md:flex items-center gap-3">
+              <NextLink href="/login" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100 px-3 py-2 rounded-md">Login</NextLink>
+              <NextLink href="/register" className="bg-royal-500 hover:bg-royal-600 text-white px-3 py-2 rounded-md">Register</NextLink>
+            </div>
           </div>
         </header>
 
@@ -458,6 +462,10 @@ export default function MemoryPage() {
             <NextLink href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</NextLink>
             <NextLink href="/memory" className="font-sans font-bold text-royal-700 underline underline-offset-4">Memory</NextLink>
           </nav>
+          <div className="ml-auto hidden md:flex items-center gap-3">
+            <NextLink href="/login" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100 px-3 py-2 rounded-md">Login</NextLink>
+            <NextLink href="/register" className="bg-royal-500 hover:bg-royal-600 text-white px-3 py-2 rounded-md">Register</NextLink>
+          </div>
         </div>
       </header>
 

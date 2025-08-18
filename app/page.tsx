@@ -20,6 +20,14 @@ export default function LandingPage() {
             <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
           </nav>
+          <div className="ml-auto hidden md:flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100">Login</Button>
+            </Link>
+            <Link href="/register">
+              <Button className="bg-royal-500 hover:bg-royal-600 text-white">Register</Button>
+            </Link>
+          </div>
         </div>
       </header>
 

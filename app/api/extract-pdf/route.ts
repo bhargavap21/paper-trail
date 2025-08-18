@@ -82,63 +82,74 @@ async function downloadPdf(pdfUrl: string): Promise<Buffer | null> {
   const maxRetries = 3;
   const delays = [2000, 5000, 10000]; // Progressive delays
   
+  // Helper to build headers with dynamic referer
+  const buildHeaders = (urlStr: string) => {
+    try {
+      const u = new URL(urlStr);
+      const referer = `${u.protocol}//${u.host}`;
+      return {
+        'Accept': 'application/pdf,*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      } as Record<string, string>;
+    } catch {
+      return {
+        'Accept': 'application/pdf,*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      } as Record<string, string>;
+    }
+  };
+  
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       console.log(`📥 Downloading PDF (attempt ${attempt + 1}/${maxRetries}):`, pdfUrl)
       
-      // Add delay for retries
       if (attempt > 0) {
         console.log(`⏱️ Waiting ${delays[attempt - 1]}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
       }
       
-      const response = await fetch(pdfUrl, {
-        headers: {
-          'Accept': 'application/pdf,*/*',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': 'https://jmg.bmj.com/',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      })
+      let response = await fetch(pdfUrl, { headers: buildHeaders(pdfUrl) });
       
       if (!response.ok) {
         if (response.status === 429 && attempt < maxRetries - 1) {
           console.log(`⚠️ Rate limited (429), will retry in ${delays[attempt]}ms`);
-          continue; // Continue to next attempt
+          continue;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
       
-      const contentType = response.headers.get('content-type') || ''
+      let contentType = response.headers.get('content-type') || ''
       console.log('📄 Response content-type:', contentType);
       
-      // Accept HTML responses as well (some PDFs might be served with wrong content-type)
-      if (!contentType.includes('application/pdf') && !contentType.includes('text/html')) {
-        console.warn('⚠️ Unexpected content type:', contentType)
-        // Don't return null immediately, let's try to process it
+      // If HTML was returned, try a one-time refetch with stripped headers
+      if (contentType.includes('text/html')) {
+        console.warn('⚠️ HTML returned for supposed PDF; retrying with minimal headers...');
+        response = await fetch(pdfUrl, { headers: { 'Accept': 'application/pdf,*/*' } });
+        contentType = response.headers.get('content-type') || contentType;
+        console.log('📄 Retried content-type:', contentType);
       }
       
       const buffer = Buffer.from(await response.arrayBuffer())
       console.log('✅ PDF downloaded successfully, size:', buffer.length, 'bytes')
       
-      // Basic PDF validation - check for PDF header
       const pdfHeader = buffer.toString('ascii', 0, 4);
       if (pdfHeader === '%PDF') {
         console.log('✅ Valid PDF header detected');
         return buffer;
       } else {
         console.warn('⚠️ Invalid PDF header, got:', pdfHeader);
-        // Still return the buffer - sometimes PDFs have wrappers
         return buffer;
       }
       
     } catch (error) {
-      console.error(`❌ Attempt ${attempt + 1} failed:`, error.message);
-      
-      // If this is the last attempt, fail
+      console.error(`❌ Attempt ${attempt + 1} failed:`, (error as Error).message);
       if (attempt === maxRetries - 1) {
         console.error('❌ All download attempts failed');
         return null;

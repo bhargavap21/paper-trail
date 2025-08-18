@@ -367,8 +367,11 @@ export default function ReaderPage({ params }: { params: { id: string } }) {
               </nav>
             </div>
             
-            {/* Right spacer to balance the logo */}
-            <div className="w-[140px]"></div>
+            {/* Right actions */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link href="/login" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100 px-3 py-2 rounded-md">Login</Link>
+              <Link href="/register" className="bg-royal-500 hover:bg-royal-600 text-white px-3 py-2 rounded-md">Register</Link>
+            </div>
           </div>
         </header>
 

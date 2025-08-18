@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 
 // Configuration for the manim backend server
-const MANIM_SERVER_URL = process.env.MANIM_SERVER_URL || 'http://127.0.0.1:8001'
+const MANIM_SERVER_URL = process.env.MANIM_SERVER_URL || 'http://127.0.0.1:8000'
 
 interface ManimJobResponse {
   job_id: string
@@ -34,7 +34,7 @@ async function getPaperContent(paperId: string) {
   }
 }
 
-async function uploadPaperToManim(paperContent: any): Promise<string | null> {
+async function uploadPaperToManim(paperContent: any, userPrompt: string = ""): Promise<string | null> {
   try {
     if (!paperContent?.filePath) {
       console.log('No filePath found in paperContent:', paperContent)
@@ -61,6 +61,7 @@ async function uploadPaperToManim(paperContent: any): Promise<string | null> {
     const formData = new FormData()
     const blob = new Blob([fileBuffer], { type: 'application/pdf' })
     formData.append('file', blob, paperContent.originalName || 'paper.pdf')
+    formData.append('user_prompt', userPrompt)
     
     console.log('Uploading PDF file to manim backend...')
     
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
     // Check if manim server is available
     let isManimpAvailable = false
     try {
-      const healthCheck = await fetch(`${MANIM_SERVER_URL}/api-info`, {
+      const healthCheck = await fetch(`${MANIM_SERVER_URL}/`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000) // 5 second timeout
       })
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
         
         console.log('Using actual paper for manim generation:', paperContent.title)
         
-        const jobId = await uploadPaperToManim(paperContent)
+        const jobId = await uploadPaperToManim(paperContent, prompt)
           
         if (jobId) {
           // Return job information for tracking

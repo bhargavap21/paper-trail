@@ -132,8 +132,8 @@ export default function SearchPage() {
         throw new Error(data.error)
       }
       
-      // Open the reader page with the extracted paper
-      window.open(`/reader/${data.paperId}`, '_blank')
+      // Navigate to the reader page with the extracted paper
+      router.push(`/reader/${data.paperId}`)
       
     } catch (error) {
       console.error('Error extracting paper:', error)
@@ -180,6 +180,14 @@ export default function SearchPage() {
             <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
           </nav>
+          <div className="ml-auto hidden md:flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100">Login</Button>
+            </Link>
+            <Link href="/register">
+              <Button className="bg-royal-500 hover:bg-royal-600 text-white">Register</Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -229,8 +237,7 @@ export default function SearchPage() {
                   placeholder="Ask your research question here..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="min-h-[80px] max-h-[200px] resize-none bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 rounded-2xl px-4 py-3 focus:border-royal-500 focus:ring-2 focus:ring-royal-500 focus:ring-offset-0 transition-all duration-200 shadow-sm"
-                  style={{ fontSize: '20px' }}
+                  className="min-h-[80px] max-h-[200px] resize-none bg-white border-gray-300 text-royal-600 placeholder:text-royal-600/60 rounded-2xl px-4 py-3 focus:border-royal-500 focus:ring-2 focus:ring-royal-500 focus:ring-offset-0 transition-all duration-200 shadow-sm text-sm font-normal"
                   disabled={isSearching}
                 />
               </div>
@@ -291,6 +298,29 @@ export default function SearchPage() {
                   </div>
                 </div>
               )}
+
+              {/* Health Check */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-700">Extractor Health</h4>
+                  <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
+                    try {
+                      const res = await fetch('/api/health', { cache: 'no-store' })
+                      const data = await res.json()
+                      const lines = [
+                        `BrowserBase: ${data.browserbase.ok ? 'OK' : 'ISSUE'}${data.browserbase.reason ? ' ('+data.browserbase.reason+')' : ''}`,
+                        `arXiv: ${data.results?.arxiv?.ok ? 'OK' : 'ISSUE'} via ${data.results?.arxiv?.methodTried}`,
+                        `PubMed: ${data.results?.pubmed?.ok ? 'OK' : 'ISSUE'} via ${data.results?.pubmed?.methodTried}`,
+                      ]
+                      alert(lines.join('\n'))
+                    } catch (e) {
+                      alert('Health check failed')
+                    }
+                  }}>Run Check</Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Runs a quick probe for BrowserBase and sample arXiv/PubMed extraction without downloading PDFs.</p>
+              </div>
+
             </CardContent>
           </Card>
 

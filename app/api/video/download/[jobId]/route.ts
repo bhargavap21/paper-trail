@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Configuration for the manim backend server
-const MANIM_SERVER_URL = process.env.MANIM_SERVER_URL || 'http://127.0.0.1:8001'
+const MANIM_SERVER_URL = process.env.MANIM_SERVER_URL || 'http://127.0.0.1:8000'
 
 export async function GET(
   request: NextRequest,

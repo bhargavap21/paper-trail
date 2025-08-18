@@ -101,6 +101,10 @@ export default function ReaderPage() {
               <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
               <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
             </nav>
+            <div className="ml-auto hidden md:flex items-center gap-3">
+              <Link href="/login" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100 px-3 py-2 rounded-md">Login</Link>
+              <Link href="/register" className="bg-royal-500 hover:bg-royal-600 text-white px-3 py-2 rounded-md">Register</Link>
+            </div>
           </div>
         </header>
 
@@ -146,6 +150,10 @@ export default function ReaderPage() {
             <Link href="/library" className="font-sans font-medium text-royal-500 hover:text-royal-600">Library</Link>
             <Link href="/memory" className="font-sans font-medium text-royal-500 hover:text-royal-600">Memory</Link>
           </nav>
+          <div className="ml-auto hidden md:flex items-center gap-3">
+            <Link href="/login" className="text-royal-600 hover:text-royal-700 hover:bg-royal-100 px-3 py-2 rounded-md">Login</Link>
+            <Link href="/register" className="bg-royal-500 hover:bg-royal-600 text-white px-3 py-2 rounded-md">Register</Link>
+          </div>
         </div>
       </header>
 

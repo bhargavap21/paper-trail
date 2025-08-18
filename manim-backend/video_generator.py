@@ -355,7 +355,7 @@ async def generate_summary_video_upload(pdf_path: str, user_prompt: str = "") ->
     output_dir = "clips"
     os.makedirs(output_dir, exist_ok=True)
     
-    video_paths = await generate_manim_clips(clips, output_dir, "medium_quality")
+    video_paths = await generate_manim_clips(clips, output_dir, "medium_quality", target_clips=4, max_retries=2)
     
     # Track video generation metrics
     successful_clips = 0
@@ -531,7 +531,7 @@ async def generate_summary_video(pdf_url: str, user_prompt: str = "") -> dict:
     output_dir = "clips"
     os.makedirs(output_dir, exist_ok=True)
     
-    video_paths = await generate_manim_clips(clips, output_dir, "medium_quality")
+    video_paths = await generate_manim_clips(clips, output_dir, "medium_quality", target_clips=4, max_retries=2)
     
     # Track video generation metrics
     successful_clips = 0

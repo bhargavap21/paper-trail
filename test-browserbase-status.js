@@ -26,7 +26,7 @@ async function testBrowserBaseStatus() {
     // Test basic navigation
     console.log('🔗 Testing navigation to PubMed...');
     await stagehand.page.goto('https://pubmed.ncbi.nlm.nih.gov/25713109/', { 
-      waitUntil: 'networkidle0', 
+      waitUntil: 'networkidle', 
       timeout: 30000 
     });
     
@@ -93,7 +93,7 @@ async function testBrowserBaseStatus() {
       // Test navigation to BMJ
       console.log('🔄 Testing BMJ navigation...');
       await stagehand.page.goto(linkAnalysis.bmjLinks[0].url, { 
-        waitUntil: 'networkidle0', 
+        waitUntil: 'networkidle', 
         timeout: 30000 
       });
       

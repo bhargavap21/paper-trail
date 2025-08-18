@@ -280,6 +280,25 @@ async def process_video_generation(job_id: str, pdf_source: str, prompt: str = "
             result["video_path"] = final_path
             print(f"✅ Video successfully moved to: {final_path}")
         
+        # Automatic VideoDB upload and analysis after video generation
+        videodb_analysis = None
+        try:
+            print(f"🎬 Starting automatic VideoDB upload and analysis...")
+            from videodb_bridge import VideoDBBridge
+            
+            bridge = VideoDBBridge()
+            videodb_analysis = await bridge.analyze_and_watch_video(final_path)
+            
+            if videodb_analysis:
+                print(f"✅ VideoDB analysis completed successfully")
+                # Add analysis to job metrics
+                result["videodb_analysis"] = videodb_analysis
+            else:
+                print(f"⚠️  VideoDB analysis failed but video generation succeeded")
+        except Exception as videodb_error:
+            print(f"⚠️  VideoDB upload/analysis failed: {videodb_error}")
+            print(f"📝 Video generation succeeded but quality analysis unavailable")
+        
         # Update job as completed with full metrics
         update_job_status(
             job_id, 
