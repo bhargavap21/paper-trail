@@ -1,9 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/3864119211_2124003036_223132457.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_3394500337_580707064.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_3308483481_4182736472.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_3394500337_525393527.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_100368081_1525969257.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_3366045169_2149307416.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_4141979334_825333220.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_output/manim_clip_002_attempt_0/videos/tmp08ysr4y8/720p24/partial_movie_files/SimpleScene/357702161_3394500337_3968961708.mp4'

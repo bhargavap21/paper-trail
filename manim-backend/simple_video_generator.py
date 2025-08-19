@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 import weave
 
-# Import the simple generator
-from simple_manim_generator import SimpleManimGenerator
+# Import the scalable dataset-enhanced generator for improved quality and scalability
+from scalable_dataset_enhanced_generator import ScalableDatasetEnhancedManimGenerator
 from voice_gen_fallback import generate_voice_with_fallback as generate_voice
 from veo_gen import generate_veo_thank_you_clip
 
@@ -27,16 +27,19 @@ except ImportError as e:
     raise
 
 class SimpleVideoGenerator:
-    """Simplified video generator using generative-manim best practices"""
+    """Scalable dataset-enhanced video generator using intelligent similarity scoring for large datasets"""
     
     def __init__(self):
-        self.manim_generator = SimpleManimGenerator()
+        self.manim_generator = ScalableDatasetEnhancedManimGenerator()
+        # Generate unique session ID to prevent file conflicts
+        import uuid
+        self.session_id = str(uuid.uuid4())[:8]
         
     @weave.op()
     async def generate_simple_manim_clips(self, clips_config: List[Dict]) -> Dict[str, Any]:
-        """Generate Manim clips using simplified approach"""
+        """Generate Manim clips using dataset-enhanced approach"""
         
-        print(f"🎬 Generating {len(clips_config)} video clips with simple approach...")
+        print(f"🎬 Generating {len(clips_config)} video clips with scalable dataset-enhanced approach...")
         
         results = {
             "successful_clips": 0,
@@ -46,7 +49,7 @@ class SimpleVideoGenerator:
         }
         
         for i, clip_config in enumerate(clips_config):
-            clip_name = f"simple_clip_{i:03d}"
+            clip_name = f"simple_clip_{self.session_id}_{i:03d}"
             print(f"\n🎬 Generating clip {i+1}/{len(clips_config)}: {clip_name}")
             
             try:
@@ -278,14 +281,14 @@ class SimpleVideoGenerator:
             
             try:
                 # Generate audio
-                audio_path = f"simple_clips/audio_{i}.wav"
+                audio_path = f"simple_clips/audio_{self.session_id}_{i}.wav"
                 print(f"🎤 Generating voice for clip {i+1}...")
                 
                 voice_result = await generate_voice(voice_text, audio_path)
                 
                 if voice_result and os.path.exists(audio_path):
                     # Combine with video
-                    final_path = f"simple_clips/final_{i}.mp4"
+                    final_path = f"simple_clips/final_{self.session_id}_{i}.mp4"
                     combined_path = self.combine_video_with_audio_sync(
                         video_path, audio_path, final_path
                     )
@@ -302,10 +305,14 @@ class SimpleVideoGenerator:
         return final_clips
     
     @weave.op()
-    def stitch_videos_simple(self, clip_paths: List[str], output_path: str = "simple_summary_video.mp4") -> str:
+    def stitch_videos_simple(self, clip_paths: List[str], output_path: str = None) -> str:
         """Stitch videos using simple concatenation"""
         
         print(f"\n🎬 STITCHING {len(clip_paths)} CLIPS...")
+        
+        # Set default output path with session ID if not provided
+        if output_path is None:
+            output_path = f"simple_summary_video_{self.session_id}.mp4"
         
         try:
             valid_clips = []

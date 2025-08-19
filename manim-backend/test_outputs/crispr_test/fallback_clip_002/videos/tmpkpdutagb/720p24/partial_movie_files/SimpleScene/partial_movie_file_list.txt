@@ -1,7 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/3864119211_890203332_223132457.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/357702161_3394500337_2799263388.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/357702161_4192758923_1185015915.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/357702161_2844360058_2193898130.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/357702161_1638615465_4171013279.mp4'
-file 'file:/Users/bhargavap/paper-trail-1/manim-backend/test_outputs/crispr_test/fallback_clip_002/videos/tmpkpdutagb/720p24/partial_movie_files/SimpleScene/357702161_3394500337_3278671325.mp4'

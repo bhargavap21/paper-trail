@@ -206,6 +206,13 @@ async def process_video_generation(job_id: str, pdf_source: str, prompt: str = "
             # For URLs, pass directly
             result = await generate_summary_video(pdf_source, prompt)
         
+        # Check if video generation was successful
+        if "error" in result:
+            raise Exception(result["error"])
+        
+        if "video_path" not in result:
+            raise Exception("Video generation failed - no video path returned")
+        
         # Move video to outputs directory with job ID
         os.makedirs("outputs", exist_ok=True)
         original_path = result["video_path"]

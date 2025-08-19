@@ -1,4 +1,0 @@
-file 'enhanced_clips/enhanced_manim_clip_000_attempt_0/videos/tmp3ggxti65/720p24/enhanced_manim_clip_000_attempt_0.mp4'
-file 'enhanced_clips/enhanced_manim_clip_001_attempt_0/videos/tmpdwjy1fad/720p24/enhanced_manim_clip_001_attempt_0.mp4'
-file 'enhanced_clips/enhanced_manim_clip_002_attempt_0/videos/tmpuqzwxsl4/720p24/enhanced_manim_clip_002_attempt_0.mp4'
-file 'enhanced_clips/enhanced_manim_clip_003_attempt_0/videos/tmpi2pspfc_/720p24/enhanced_manim_clip_003_attempt_0.mp4'

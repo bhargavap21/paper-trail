@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.pytest_cache/
+*.cover
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary Video Generation Files
+clips/
+simple_clips/
+enhanced_clips/
+debug_clips/
+test_clips/
+*_clips/
+
+# Test Output Directories
+test_output/
+test_outputs/
+debug_test/
+test_debug/
+test_simple/
+
+# Temporary Files
+*_frame.png
+test_frame.png
+debug_*.py
+debug_*.wav
+test_*.mp4
+test_*.wav
+test_*.png
+temp_*.py
+tmp_*.py
+concat_list.txt
+thank_you_clip.mp4
+
+# Generated Media
+*.mp4.tmp
+*.wav.tmp
+media/
+video_analysis/
+
+# Logs
+*.log
+logs/
+
+# Environment Variables
+.env
+.env.local
+
+# Uploads (keep directory but ignore contents)
+uploads/*
+!uploads/.gitkeep
+
+# Virtual Environment
+venv/
+.venv/
+
+# Manim Cache
+.manim_cache/
+
+# Node modules (if any)
+node_modules/
+
+# Temporary directories
+tmp/
+temp/

@@ -25,14 +25,17 @@ class SimpleConfigGenerator:
         """Simple, focused system prompt for configuration generation"""
         return """You are a video content planner that creates educational video configurations.
 
-TASK: Create a JSON configuration for 3-4 educational video clips based on the research paper.
+TASK: Create a JSON configuration for 3-4 educational video clips that ADDRESSES THE USER'S SPECIFIC REQUEST.
+
+IMPORTANT: Your primary goal is to fulfill the user's request. Use the research paper as supporting material and evidence.
 
 RULES:
 1. Generate EXACTLY 3-4 clips maximum
-2. Each clip should be 10-15 seconds long
-3. Focus on the most important concepts from the paper
-4. Use clear, educational voice-over text
-5. Return ONLY valid JSON - no explanations
+2. Each clip should be 10-15 seconds long  
+3. PRIORITIZE the user's specific request over just summarizing the paper
+4. If user asks to explain a concept, explain that concept using the paper as examples
+5. Use clear, educational voice-over text
+6. Return ONLY valid JSON - no explanations
 
 REQUIRED JSON FORMAT:
 {
@@ -45,7 +48,7 @@ REQUIRED JSON FORMAT:
   ]
 }
 
-Keep it simple and educational. Focus on the main research contributions."""
+Remember: Address the user's request first, use the paper as supporting evidence."""
 
     @weave.op()
     async def generate_simple_config_from_url(self, pdf_url: str, user_prompt: str = "") -> List[Dict[str, Any]]:
@@ -54,11 +57,14 @@ Keep it simple and educational. Focus on the main research contributions."""
         print(f"🎯 Generating simple config from URL: {pdf_url}")
         
         # Build simple prompt
-        prompt = f"""Create an educational video configuration for this research paper: {pdf_url}
+        user_request = user_prompt if user_prompt else "Explain the key concepts"
+        prompt = f"""PRIMARY TASK: {user_request}
 
-User request: {user_prompt if user_prompt else "Explain the key concepts"}
+Create an educational video configuration that addresses the user's specific request above. Use this research paper as supporting material: {pdf_url}
 
-Focus on the main research contributions and make it educational and accessible."""
+If the user asks to explain a general concept (like "what is NLP"), focus on explaining that concept using examples and insights from the paper, rather than just summarizing the paper's content.
+
+Make it educational and accessible."""
 
         try:
             response = self.client.messages.create(
@@ -114,16 +120,21 @@ Focus on the main research contributions and make it educational and accessible.
         
         print(f"🎯 Generating simple config from uploaded PDF")
         
-        # Build simple prompt with base64 content
-        prompt = f"""Create an educational video configuration based on this uploaded research paper.
+        # Build simple prompt with full PDF content
+        user_request = user_prompt if user_prompt else "Explain the key concepts"
+        prompt = f"""PRIMARY TASK: {user_request}
 
-User request: {user_prompt if user_prompt else "Explain the key concepts"}
+Create an educational video configuration that addresses the user's specific request above. Use the uploaded research paper as supporting material and evidence.
 
-The PDF content is provided in base64 format. Please analyze it and create an educational video configuration focusing on the main research contributions.
+If the user asks to explain a general concept (like "what is NLP"), focus on explaining that concept using examples and insights from the paper, rather than just summarizing the paper's content.
 
-PDF content: {pdf_base64[:1000]}..."""  # Truncate for prompt length
+The PDF document is provided for your analysis."""
 
         try:
+            # Convert base64 back to bytes for proper PDF handling
+            import base64
+            pdf_bytes = base64.b64decode(pdf_base64)
+            
             response = self.client.messages.create(
                 model="claude-3-5-sonnet-20241022",
                 max_tokens=1000,
@@ -132,7 +143,20 @@ PDF content: {pdf_base64[:1000]}..."""  # Truncate for prompt length
                 messages=[
                     {
                         "role": "user",
-                        "content": prompt
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt
+                            },
+                            {
+                                "type": "document",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "application/pdf",
+                                    "data": pdf_base64
+                                }
+                            }
+                        ]
                     }
                 ]
             )
